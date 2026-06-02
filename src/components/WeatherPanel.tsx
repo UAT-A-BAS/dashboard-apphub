@@ -217,15 +217,15 @@ export function GreetingBlock() {
 
   return (
     <div className="hero-copy">
-      <p className="text-sm font-medium text-white/70">
+      <p className="hero-date">
         {new Intl.DateTimeFormat('id-ID', { weekday: 'long', day: '2-digit', month: 'long', year: 'numeric' }).format(now)}
       </p>
       <div className="mt-4 flex items-end gap-3">
-        <h1 className="text-[4.25rem] font-semibold leading-none tracking-normal text-white drop-shadow-sm sm:text-[5.5rem]">
+        <h1 className="hero-time">
           {new Intl.DateTimeFormat('id-ID', { hour: '2-digit', minute: '2-digit', hour12: false }).format(now)}
         </h1>
       </div>
-      <h2 className="mt-5 text-3xl font-semibold tracking-normal text-white sm:text-4xl">{getGreeting(now)}.</h2>
+      <h2 className="hero-greeting">{getGreeting(now)}.</h2>
     </div>
   );
 }
