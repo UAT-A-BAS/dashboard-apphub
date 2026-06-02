@@ -84,8 +84,8 @@ a {
     radial-gradient(circle at 74% 18%, rgba(245, 232, 196, 0.22), transparent 13rem),
     linear-gradient(145deg, #061122 0%, #132849 48%, #253856 100%);
   --scene-wash:
-    radial-gradient(circle at 78% 24%, rgba(173, 196, 255, 0.2), transparent 26%),
-    linear-gradient(180deg, rgba(3, 7, 18, 0.08), rgba(3, 7, 18, 0.42));
+    radial-gradient(circle at 78% 24%, rgba(173, 196, 255, 0.18), transparent 26%),
+    linear-gradient(180deg, rgba(3, 7, 18, 0.06), rgba(3, 7, 18, 0.34));
   --panel-bg: rgba(28, 39, 63, 0.72);
   --card-bg: rgba(35, 47, 73, 0.74);
   --panel-border: rgba(203, 213, 225, 0.18);
@@ -126,7 +126,7 @@ a {
   --scene:
     linear-gradient(145deg, #2d4158 0%, #60748b 50%, #9ba8ad 100%);
   --scene-wash:
-    linear-gradient(180deg, rgba(15, 23, 42, 0.08), rgba(2, 6, 23, 0.5));
+    linear-gradient(180deg, rgba(15, 23, 42, 0.06), rgba(2, 6, 23, 0.44));
   --panel-bg: rgba(24, 35, 58, 0.72);
   --card-bg: rgba(32, 44, 68, 0.76);
   --panel-border: rgba(191, 219, 254, 0.22);
@@ -138,9 +138,10 @@ a {
 .home-page[data-theme='thunderstorm'] {
   --scene:
     radial-gradient(circle at 74% 18%, rgba(147, 197, 253, 0.12), transparent 18rem),
-    linear-gradient(145deg, #050914 0%, #162032 48%, #303846 100%);
+    linear-gradient(145deg, #091328 0%, #1c2a43 48%, #445066 100%);
   --scene-wash:
-    linear-gradient(180deg, rgba(15, 23, 42, 0.08), rgba(2, 6, 23, 0.54));
+    radial-gradient(circle at 78% 18%, rgba(255, 255, 255, 0.08), transparent 28%),
+    linear-gradient(180deg, rgba(15, 23, 42, 0.02), rgba(2, 6, 23, 0.38));
   --panel-bg: rgba(24, 35, 58, 0.72);
   --card-bg: rgba(32, 44, 68, 0.76);
   --panel-border: rgba(191, 219, 254, 0.2);
@@ -202,8 +203,8 @@ a {
   inset: 0;
   z-index: 3;
   background:
-    linear-gradient(90deg, rgba(15, 23, 42, 0.2), rgba(255, 255, 255, 0.04) 58%, rgba(15, 23, 42, 0.22)),
-    radial-gradient(circle at 76% 18%, rgba(255, 255, 255, 0.18), transparent 28%);
+    linear-gradient(90deg, rgba(15, 23, 42, 0.18), rgba(255, 255, 255, 0.05) 58%, rgba(15, 23, 42, 0.18)),
+    radial-gradient(circle at 76% 18%, rgba(255, 255, 255, 0.16), transparent 28%);
   pointer-events: none;
 }
 
@@ -319,16 +320,16 @@ a {
 .home-page[data-theme='heavyRain'] .weather-atmosphere::before,
 .home-page[data-theme='thunderstorm'] .weather-atmosphere::before {
   inset: -22% -10%;
-  background-image: repeating-linear-gradient(106deg, rgba(255, 255, 255, 0.34) 0 1px, transparent 1px 20px);
-  opacity: 0.42;
+  background-image: repeating-linear-gradient(106deg, rgba(255, 255, 255, 0.24) 0 1px, transparent 1px 22px);
+  opacity: 0.26;
   animation: rainfall 1.55s linear infinite;
 }
 
 .home-page[data-theme='heavyRain'] .weather-atmosphere::before,
 .home-page[data-theme='thunderstorm'] .weather-atmosphere::before {
-  background-image: repeating-linear-gradient(105deg, rgba(255, 255, 255, 0.42) 0 2px, transparent 2px 14px);
-  opacity: 0.54;
-  animation-duration: 0.82s;
+  background-image: repeating-linear-gradient(105deg, rgba(255, 255, 255, 0.28) 0 1px, transparent 1px 17px);
+  opacity: 0.34;
+  animation-duration: 1.05s;
 }
 
 .home-page[data-theme='lightRain'] .weather-atmosphere::after,
@@ -352,7 +353,7 @@ a {
   --tilt-x: 0deg;
   --tilt-y: 0deg;
   display: grid;
-  grid-template-columns: minmax(0, 1fr) minmax(210px, 0.78fr);
+  grid-template-columns: minmax(0, 1fr) minmax(280px, 0.72fr);
   gap: 1.5rem;
   align-items: center;
   border: 1px solid var(--panel-border);
@@ -423,6 +424,12 @@ a {
   font-size: 0.8rem;
   font-weight: 850;
   outline: none;
+  color-scheme: light;
+}
+
+.weather-mode-control select option {
+  background: #ffffff;
+  color: #0f172a;
 }
 
 .weather-current {
@@ -611,7 +618,7 @@ a {
 .home-page[data-theme='clearNight'] .weather-mode-control select,
 .home-page[data-theme='heavyRain'] .weather-mode-control select,
 .home-page[data-theme='thunderstorm'] .weather-mode-control select {
-  background: rgba(255, 255, 255, 0.12);
+  background: rgba(255, 255, 255, 0.16);
   color: #f8fafc;
 }
 
