@@ -24,7 +24,6 @@ export default function ShortcutGrid({ shortcuts }: ShortcutGridProps) {
           <ShortcutGlyph shortcut={shortcut} iconSize={34} />
           <span className="shortcut-copy">
             <span className="shortcut-label">{shortcut.name}</span>
-            <span className="shortcut-description">{shortcut.description}</span>
           </span>
         </a>
       ))}

@@ -627,7 +627,7 @@ a {
 .shortcut-card {
   position: relative;
   display: flex;
-  min-height: clamp(138px, 13.2vh, 158px);
+  min-height: clamp(118px, 11.6vh, 136px);
   flex-direction: column;
   align-items: center;
   justify-content: center;
@@ -708,9 +708,8 @@ a {
   position: relative;
   z-index: 1;
   display: grid;
-  gap: 0.32rem;
   width: 100%;
-  margin-top: 0.78rem;
+  margin-top: 0.72rem;
   justify-items: center;
 }
 
@@ -721,19 +720,6 @@ a {
   font-weight: 850;
   line-height: 1.18;
   text-align: center;
-}
-
-.shortcut-description {
-  display: -webkit-box;
-  max-width: min(100%, 24ch);
-  overflow: hidden;
-  color: color-mix(in srgb, var(--panel-text) 68%, var(--panel-muted));
-  font-size: clamp(0.7rem, 0.64vw, 0.8rem);
-  font-weight: 700;
-  line-height: 1.3;
-  text-align: center;
-  -webkit-box-orient: vertical;
-  -webkit-line-clamp: 2;
 }
 
 .shortcut-card:focus-visible,
@@ -875,7 +861,7 @@ a {
 
 .editor-fields {
   display: grid;
-  grid-template-columns: minmax(130px, 0.9fr) minmax(220px, 1.35fr) minmax(170px, 1fr);
+  grid-template-columns: minmax(150px, 1fr) minmax(220px, 1.4fr) minmax(140px, 0.8fr) 88px;
   gap: 1rem;
 }
 
@@ -1075,7 +1061,7 @@ a {
   }
 
   .shortcut-card {
-    min-height: 138px;
+    min-height: 112px;
     border-radius: 22px;
     padding: 0.78rem 0.52rem;
   }
@@ -1098,16 +1084,10 @@ a {
 
   .shortcut-copy {
     margin-top: 0.62rem;
-    gap: 0.25rem;
   }
 
   .shortcut-label {
     font-size: 0.78rem;
-  }
-
-  .shortcut-description {
-    max-width: 18ch;
-    font-size: 0.68rem;
   }
 
   .shortcut-launch {

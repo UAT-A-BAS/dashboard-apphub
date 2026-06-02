@@ -184,15 +184,6 @@ export default function AdminPage() {
                     <input className="field" value={shortcut.name} onChange={(event) => updateShortcut(shortcut.id, { name: event.target.value })} />
                   </label>
                   <label>
-                    <span>Deskripsi</span>
-                    <input
-                      className="field"
-                      value={shortcut.description}
-                      onChange={(event) => updateShortcut(shortcut.id, { description: event.target.value })}
-                      maxLength={86}
-                    />
-                  </label>
-                  <label>
                     <span>URL</span>
                     <input className="field" value={shortcut.url} onChange={(event) => updateShortcut(shortcut.id, { url: event.target.value })} />
                   </label>
