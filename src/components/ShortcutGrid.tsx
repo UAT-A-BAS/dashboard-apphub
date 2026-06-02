@@ -1,4 +1,3 @@
-import { ExternalLink } from 'lucide-react';
 import ShortcutGlyph from './ShortcutGlyph';
 import { Shortcut } from '../lib/shortcuts';
 
@@ -20,10 +19,6 @@ export default function ShortcutGrid({ shortcuts }: ShortcutGridProps) {
         >
           <ShortcutGlyph shortcut={shortcut} />
           <span className="mt-5 text-center text-base font-semibold text-slate-950">{shortcut.name}</span>
-          <span className="mt-2 flex items-center gap-1 text-sm font-medium text-slate-500" aria-hidden="true">
-            <span>Open</span>
-            <ExternalLink className="opacity-0 transition-opacity duration-200 group-hover:opacity-100" size={14} />
-          </span>
         </a>
       ))}
     </section>
