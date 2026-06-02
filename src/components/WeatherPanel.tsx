@@ -157,7 +157,7 @@ export default function WeatherPanel({ compact = false, onModeChange }: WeatherP
                   ? 'CloudLightning'
                   : pointMode === 'heavyRain' || pointMode === 'lightRain'
                     ? 'CloudRain'
-                    : pointMode === 'cloudy'
+                    : pointMode === 'cloudy' || pointMode === 'cloudyNight'
                       ? 'Cloud'
                       : pointMode === 'partlyCloudy'
                         ? 'CloudSun'

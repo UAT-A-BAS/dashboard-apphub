@@ -21,7 +21,7 @@ export default function ShortcutGrid({ shortcuts }: ShortcutGridProps) {
           <span className="shortcut-launch" aria-hidden="true">
             <ArrowUpRight size={15} strokeWidth={2.4} />
           </span>
-          <ShortcutGlyph shortcut={shortcut} iconSize={34} />
+          <ShortcutGlyph shortcut={shortcut} iconSize={42} />
           <span className="shortcut-copy">
             <span className="shortcut-label">{shortcut.name}</span>
           </span>

@@ -56,6 +56,7 @@ export type WeatherMode =
   | 'clearNight'
   | 'partlyCloudy'
   | 'cloudy'
+  | 'cloudyNight'
   | 'lightRain'
   | 'heavyRain'
   | 'thunderstorm';
@@ -69,6 +70,7 @@ export const WEATHER_MODE_LABELS: Record<WeatherMode, string> = {
   clearNight: 'MALAM CERAH',
   partlyCloudy: 'CERAH BERAWAN',
   cloudy: 'MENDUNG',
+  cloudyNight: 'MALAM MENDUNG',
   lightRain: 'HUJAN RINGAN',
   heavyRain: 'HUJAN LEBAT',
   thunderstorm: 'BADAI / PETIR',
@@ -102,7 +104,7 @@ export function getThemeFromWeather(code: number, isDay: boolean, date = new Dat
   if ([95, 96, 99].includes(code)) return 'thunderstorm';
   if ([63, 65, 66, 67, 81, 82].includes(code)) return 'heavyRain';
   if ([51, 53, 55, 56, 57, 61, 80].includes(code)) return 'lightRain';
-  if ([3, 45, 48].includes(code)) return 'cloudy';
+  if ([3, 45, 48].includes(code)) return isDay && date.getHours() < 19 ? 'cloudy' : 'cloudyNight';
   if ([1, 2].includes(code)) return 'partlyCloudy';
   return getClearMode(date, isDay);
 }
