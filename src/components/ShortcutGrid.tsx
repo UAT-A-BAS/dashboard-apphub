@@ -17,8 +17,8 @@ export default function ShortcutGrid({ shortcuts }: ShortcutGridProps) {
           key={shortcut.id}
           aria-label={`Buka ${shortcut.name}`}
         >
-          <ShortcutGlyph shortcut={shortcut} />
-          <span className="mt-5 text-center text-base font-semibold text-slate-950">{shortcut.name}</span>
+          <ShortcutGlyph shortcut={shortcut} iconSize={36} />
+          <span className="shortcut-label">{shortcut.name}</span>
         </a>
       ))}
     </section>

@@ -23,11 +23,11 @@ export default function HomePage() {
       <div className="home-surface">
         <div className="weather-atmosphere" aria-hidden="true" />
         <div className="hero-glass" />
-        <div className="dashboard-shell relative z-10 mx-auto flex min-h-dvh w-full max-w-[1720px] flex-col justify-center gap-10 px-6 py-10 sm:px-10 sm:py-12 lg:px-12 xl:px-14">
-          <div className="weather-hero-grid grid items-center gap-10 lg:grid-cols-[minmax(360px,0.58fr)_minmax(720px,1fr)] xl:grid-cols-[minmax(380px,0.5fr)_minmax(900px,1fr)]">
+        <div className="dashboard-shell relative z-10 mx-auto flex min-h-dvh w-full max-w-[1660px] flex-col justify-center gap-8 px-5 py-8 sm:px-8 sm:py-10 lg:px-10 xl:px-12">
+          <section className="dashboard-hero-card">
             <GreetingBlock />
             <WeatherPanel onModeChange={setTheme} />
-          </div>
+          </section>
           <ShortcutGrid shortcuts={shortcuts} />
           <footer className="pb-2 text-center text-sm font-semibold text-white/70">
             Developed by Alex Surya Marcelo (UAT-A) <span aria-hidden="true">•</span> AppHub
