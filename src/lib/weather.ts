@@ -203,10 +203,18 @@ export function getThemeFromTime(date = new Date()): WeatherMode {
 
 export function getGreeting(date = new Date()) {
   const hour = date.getHours();
-  if (hour < 11) return 'Selamat pagi';
-  if (hour < 15) return 'Selamat siang';
-  if (hour < 18) return 'Selamat sore';
-  return 'Selamat malam';
+  if (hour < 11) return 'Selamat Pagi';
+  if (hour < 15) return 'Selamat Siang';
+  if (hour < 18) return 'Selamat Sore';
+  return 'Selamat Malam';
+}
+
+export function getMotivationalGreeting(date = new Date()) {
+  const hour = date.getHours();
+  if (hour < 11) return 'Mulailah hari dengan pengujian yang terarah dan terstruktur.';
+  if (hour < 15) return 'Tetap fokus pada detail yang menjaga kualitas tetap tinggi.';
+  if (hour < 18) return 'Kemajuan kecil yang konsisten membentuk hasil yang berkualitas.';
+  return 'Pastikan setiap pekerjaan hari ini meninggalkan dampak yang berarti.';
 }
 
 export function formatHour(value: string) {

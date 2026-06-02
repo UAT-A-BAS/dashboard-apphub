@@ -5,6 +5,7 @@ import {
   fetchWeather,
   formatHour,
   getGreeting,
+  getMotivationalGreeting,
   getThemeFromTime,
   getThemeFromWeather,
   WeatherData,
@@ -226,6 +227,7 @@ export function GreetingBlock() {
         </h1>
       </div>
       <h2 className="hero-greeting">{getGreeting(now)}.</h2>
+      <p className="hero-motivation">{getMotivationalGreeting(now)}</p>
     </div>
   );
 }
