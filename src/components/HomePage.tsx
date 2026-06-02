@@ -23,7 +23,7 @@ export default function HomePage() {
       <div className="home-surface">
         <div className="weather-atmosphere" aria-hidden="true" />
         <div className="hero-glass" />
-        <div className="dashboard-shell relative z-10 mx-auto flex min-h-dvh w-full max-w-[1660px] flex-col justify-center gap-8 px-5 py-8 sm:px-8 sm:py-10 lg:px-10 xl:px-12">
+        <div className="dashboard-shell relative z-10 mx-auto flex min-h-dvh w-full max-w-[1660px] flex-col justify-center gap-5 px-4 py-5 sm:px-6 sm:py-6 lg:px-8 xl:px-10">
           <section className="dashboard-hero-card">
             <GreetingBlock />
             <WeatherPanel onModeChange={setTheme} />
