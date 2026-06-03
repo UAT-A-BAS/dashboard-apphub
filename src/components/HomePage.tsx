@@ -7,6 +7,7 @@ import { getThemeFromTime, WeatherMode } from '../lib/weather';
 export default function HomePage() {
   const [shortcuts, setShortcuts] = useState<Shortcut[]>(() => readShortcuts());
   const [theme, setTheme] = useState<WeatherMode>(() => getThemeFromTime());
+  const [renderMode, setRenderMode] = useState<'standard' | 'lite'>('standard');
 
   useEffect(() => {
     const sync = () => setShortcuts(readShortcuts());
@@ -18,8 +19,20 @@ export default function HomePage() {
     };
   }, []);
 
+  useEffect(() => {
+    const nav = navigator as Navigator & {
+      deviceMemory?: number;
+      connection?: { saveData?: boolean };
+    };
+    const cpuCores = nav.hardwareConcurrency ?? 8;
+    const deviceMemory = nav.deviceMemory ?? 8;
+    const prefersReducedMotion = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+    const lowPowerDevice = cpuCores <= 8 || deviceMemory <= 4;
+    setRenderMode(nav.connection?.saveData || prefersReducedMotion || lowPowerDevice ? 'lite' : 'standard');
+  }, []);
+
   return (
-    <main className="home-page min-h-dvh overflow-hidden text-slate-900" data-theme={theme}>
+    <main className="home-page min-h-dvh overflow-hidden text-slate-900" data-theme={theme} data-render={renderMode}>
       <div className="home-surface">
         <div className="weather-atmosphere" aria-hidden="true" />
         <div className="hero-glass" />
