@@ -1,6 +1,12 @@
 import { useEffect, useMemo, useState } from 'react';
 import { shortcutIcons } from '../lib/icons';
-import { getCustomShortcutIcon, getFaviconCandidates, Shortcut } from '../lib/shortcuts';
+import {
+  getCustomShortcutIcon,
+  getFaviconCandidates,
+  rememberFaviconFailure,
+  rememberFaviconSuccess,
+  Shortcut,
+} from '../lib/shortcuts';
 
 type ShortcutGlyphProps = {
   shortcut: Shortcut;
@@ -30,8 +36,14 @@ export default function ShortcutGlyph({ shortcut, iconSize = 30 }: ShortcutGlyph
           alt=""
           decoding="async"
           loading="lazy"
+          onLoad={() => {
+            if (!customIconUrl) rememberFaviconSuccess(shortcut.url, faviconUrl);
+          }}
           onError={() => {
-            if (!customIconUrl) setCandidateIndex((index) => index + 1);
+            if (!customIconUrl) {
+              rememberFaviconFailure(shortcut.url, faviconUrl);
+              setCandidateIndex((index) => index + 1);
+            }
           }}
         />
       ) : (

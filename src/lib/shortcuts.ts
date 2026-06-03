@@ -1,6 +1,8 @@
 import { ShortcutIconName, shortcutIconNames } from './icons';
 
 export const SHORTCUT_STORAGE_KEY = 'apphub.shortcuts.v2';
+const FAVICON_CACHE_KEY = 'apphub.favicons.v1';
+const FAVICON_CACHE_MAX_AGE_MS = 7 * 24 * 60 * 60 * 1000;
 export const MAX_SHORTCUTS = 8;
 
 export type Shortcut = {
@@ -72,6 +74,14 @@ export const defaultShortcuts: Shortcut[] = [
 
 const safeHex = /^#[0-9a-fA-F]{6}$/;
 
+type FaviconCacheEntry = {
+  url?: string;
+  failed?: string[];
+  savedAt: number;
+};
+
+type FaviconCache = Record<string, FaviconCacheEntry>;
+
 export function normalizeUrl(value: string) {
   const trimmed = value.trim();
   if (!trimmed) return 'https://example.com';
@@ -85,6 +95,31 @@ export function getShortcutHost(url: string) {
   } catch {
     return 'invalid-url';
   }
+}
+
+function readFaviconCache(): FaviconCache {
+  try {
+    const raw = localStorage.getItem(FAVICON_CACHE_KEY);
+    if (!raw) return {};
+    const parsed = JSON.parse(raw);
+    return parsed && typeof parsed === 'object' ? (parsed as FaviconCache) : {};
+  } catch {
+    return {};
+  }
+}
+
+function writeFaviconCache(cache: FaviconCache) {
+  try {
+    localStorage.setItem(FAVICON_CACHE_KEY, JSON.stringify(cache));
+  } catch {
+    // Favicon cache is optional and must not affect shortcuts.
+  }
+}
+
+function readFreshFaviconEntry(host: string) {
+  const entry = readFaviconCache()[host];
+  if (!entry || Date.now() - entry.savedAt > FAVICON_CACHE_MAX_AGE_MS) return null;
+  return entry;
 }
 
 export function getCustomShortcutIcon(shortcut: Pick<Shortcut, 'name' | 'url'>) {
@@ -102,11 +137,46 @@ export function getFaviconCandidates(url: string) {
     const domain = parsed.hostname;
     const publicIcon = `https://icons.duckduckgo.com/ip3/${encodeURIComponent(domain)}.ico`;
     if (!domain.includes('.')) return [];
-    if (domain.endsWith('.pages.dev')) return [publicIcon];
-    if (domain.endsWith('.bca.co.id')) return [`${parsed.origin}/favicon.ico`];
-    return [`${parsed.origin}/favicon.ico`, `${parsed.origin}/favicon.svg`, publicIcon];
+    const entry = readFreshFaviconEntry(domain);
+    const failed = new Set(entry?.failed ?? []);
+    const baseCandidates = domain.endsWith('.pages.dev')
+      ? [publicIcon]
+      : domain.endsWith('.bca.co.id')
+        ? [`${parsed.origin}/favicon.ico`]
+        : [`${parsed.origin}/favicon.ico`, `${parsed.origin}/favicon.svg`, publicIcon];
+    const candidates = baseCandidates.filter((candidate) => !failed.has(candidate));
+    return entry?.url && !failed.has(entry.url) ? [entry.url, ...candidates.filter((candidate) => candidate !== entry.url)] : candidates;
   } catch {
     return [];
+  }
+}
+
+export function rememberFaviconSuccess(shortcutUrl: string, faviconUrl: string) {
+  try {
+    const host = new URL(normalizeUrl(shortcutUrl)).hostname;
+    const cache = readFaviconCache();
+    cache[host] = { url: faviconUrl, failed: [], savedAt: Date.now() };
+    writeFaviconCache(cache);
+  } catch {
+    // Ignore invalid URLs.
+  }
+}
+
+export function rememberFaviconFailure(shortcutUrl: string, faviconUrl: string) {
+  try {
+    const host = new URL(normalizeUrl(shortcutUrl)).hostname;
+    const cache = readFaviconCache();
+    const previous = readFreshFaviconEntry(host);
+    const failed = new Set(previous?.failed ?? []);
+    failed.add(faviconUrl);
+    cache[host] = {
+      url: previous?.url === faviconUrl ? undefined : previous?.url,
+      failed: Array.from(failed).slice(-5),
+      savedAt: Date.now(),
+    };
+    writeFaviconCache(cache);
+  } catch {
+    // Ignore invalid URLs.
   }
 }
 
