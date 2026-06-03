@@ -69,6 +69,50 @@ export default function AdminPage() {
     setShortcuts((items) => items.filter((item) => item.id !== id));
   }
 
+  function updateIconMode(id: string, iconMode: NonNullable<Shortcut['iconMode']>) {
+    setShortcuts((items) =>
+      items.map((item) =>
+        item.id === id
+          ? {
+              ...item,
+              iconMode,
+              customIconDataUrl: iconMode === 'custom' ? item.customIconDataUrl : undefined,
+            }
+          : item,
+      ),
+    );
+  }
+
+  function uploadCustomIcon(id: string, event: ChangeEvent<HTMLInputElement>) {
+    const file = event.target.files?.[0];
+    if (!file) return;
+    if (!file.type.startsWith('image/')) {
+      setNotice({ tone: 'error', message: 'File icon harus berupa gambar.' });
+      event.target.value = '';
+      return;
+    }
+    if (file.size > 250_000) {
+      setNotice({ tone: 'error', message: 'Ukuran icon maksimal 250 KB agar dashboard tetap ringan.' });
+      event.target.value = '';
+      return;
+    }
+
+    const reader = new FileReader();
+    reader.onload = () => {
+      updateShortcut(id, {
+        iconMode: 'custom',
+        customIconDataUrl: String(reader.result),
+      });
+      setNotice({ tone: 'success', message: 'Icon custom siap digunakan. Klik Save Perubahan untuk menyimpan.' });
+      event.target.value = '';
+    };
+    reader.readAsDataURL(file);
+  }
+
+  function clearCustomIcon(id: string) {
+    updateShortcut(id, { customIconDataUrl: undefined });
+  }
+
   function handleSave() {
     setShortcuts(saveShortcuts(shortcuts));
     setNotice({ tone: 'success', message: 'Shortcut disimpan di localStorage browser ini.' });
@@ -196,7 +240,19 @@ export default function AdminPage() {
                     <input className="field" value={shortcut.url} onChange={(event) => updateShortcut(shortcut.id, { url: event.target.value })} />
                   </label>
                   <label>
-                    <span>Icon</span>
+                    <span>Sumber Icon</span>
+                    <select
+                      className="field"
+                      value={shortcut.iconMode ?? 'favicon'}
+                      onChange={(event) => updateIconMode(shortcut.id, event.target.value as NonNullable<Shortcut['iconMode']>)}
+                    >
+                      <option value="favicon">Favicon Web</option>
+                      <option value="custom">Upload Sendiri</option>
+                      <option value="generic">Generic</option>
+                    </select>
+                  </label>
+                  <label>
+                    <span>Generic Icon</span>
                     <select
                       className="field"
                       value={shortcut.icon}
@@ -217,6 +273,15 @@ export default function AdminPage() {
                       type="color"
                       onChange={(event) => updateShortcut(shortcut.id, { color: event.target.value })}
                     />
+                  </label>
+                  <label className="upload-field">
+                    <span>Upload</span>
+                    <input className="field file-field" type="file" accept="image/*" onChange={(event) => uploadCustomIcon(shortcut.id, event)} />
+                    {shortcut.customIconDataUrl ? (
+                      <button className="text-button" type="button" onClick={() => clearCustomIcon(shortcut.id)}>
+                        Hapus upload
+                      </button>
+                    ) : null}
                   </label>
                 </div>
 

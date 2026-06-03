@@ -1,7 +1,7 @@
 import { ShortcutIconName, shortcutIconNames } from './icons';
 
-const LEGACY_SHORTCUT_STORAGE_KEY = 'apphub.shortcuts.v2';
-export const SHORTCUT_STORAGE_KEY = 'apphub.shortcuts.v3';
+const LEGACY_SHORTCUT_STORAGE_KEYS = ['apphub.shortcuts.v3', 'apphub.shortcuts.v2'];
+export const SHORTCUT_STORAGE_KEY = 'apphub.shortcuts.v4';
 const FAVICON_CACHE_KEY = 'apphub.favicons.v1';
 const FAVICON_CACHE_MAX_AGE_MS = 7 * 24 * 60 * 60 * 1000;
 export const MAX_SHORTCUTS = 50;
@@ -12,6 +12,8 @@ export type Shortcut = {
   url: string;
   icon: ShortcutIconName;
   color: string;
+  iconMode?: 'favicon' | 'custom' | 'generic';
+  customIconDataUrl?: string;
 };
 
 export const defaultShortcuts: Shortcut[] = [
@@ -102,6 +104,7 @@ export const defaultShortcuts: Shortcut[] = [
 ];
 
 const safeHex = /^#[0-9a-fA-F]{6}$/;
+const safeIconModes = ['favicon', 'custom', 'generic'];
 
 type FaviconCacheEntry = {
   url?: string;
@@ -213,6 +216,11 @@ export function sanitizeShortcut(input: Partial<Shortcut>, index: number): Short
   const fallback = defaultShortcuts[index] ?? defaultShortcuts[0];
   const name = String(input.name || fallback.name).trim().slice(0, 48);
   const url = normalizeUrl(String(input.url || fallback.url));
+  const iconMode = safeIconModes.includes(String(input.iconMode)) ? (input.iconMode as Shortcut['iconMode']) : 'favicon';
+  const customIconDataUrl =
+    typeof input.customIconDataUrl === 'string' && input.customIconDataUrl.startsWith('data:image/')
+      ? input.customIconDataUrl.slice(0, 350_000)
+      : undefined;
   return {
     id: String(input.id || crypto.randomUUID()),
     name,
@@ -221,6 +229,8 @@ export function sanitizeShortcut(input: Partial<Shortcut>, index: number): Short
       ? input.icon
       : fallback.icon) as ShortcutIconName,
     color: safeHex.test(String(input.color)) ? String(input.color) : fallback.color,
+    iconMode,
+    customIconDataUrl,
   };
 }
 
@@ -250,6 +260,7 @@ export function createShortcutDraft(index: number): Shortcut {
     url: 'https://example.com',
     icon: 'Home',
     color: '#334155',
+    iconMode: 'favicon',
   };
 }
 
@@ -258,11 +269,13 @@ export function readShortcuts(): Shortcut[] {
     const currentList = parseShortcutList(localStorage.getItem(SHORTCUT_STORAGE_KEY));
     if (currentList) return currentList.slice(0, MAX_SHORTCUTS).map((item, index) => sanitizeShortcut(item, index));
 
-    const legacyList = parseShortcutList(localStorage.getItem(LEGACY_SHORTCUT_STORAGE_KEY));
-    if (legacyList) {
-      const migrated = appendMissingDefaults(legacyList.slice(0, MAX_SHORTCUTS).map((item, index) => sanitizeShortcut(item, index)));
-      localStorage.setItem(SHORTCUT_STORAGE_KEY, JSON.stringify(migrated, null, 2));
-      return migrated;
+    for (const legacyKey of LEGACY_SHORTCUT_STORAGE_KEYS) {
+      const legacyList = parseShortcutList(localStorage.getItem(legacyKey));
+      if (legacyList) {
+        const migrated = appendMissingDefaults(legacyList.slice(0, MAX_SHORTCUTS).map((item, index) => sanitizeShortcut(item, index)));
+        localStorage.setItem(SHORTCUT_STORAGE_KEY, JSON.stringify(migrated, null, 2));
+        return migrated;
+      }
     }
 
     return defaultShortcuts;

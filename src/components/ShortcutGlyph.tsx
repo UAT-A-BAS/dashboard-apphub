@@ -14,33 +14,36 @@ type ShortcutGlyphProps = {
 };
 
 export default function ShortcutGlyph({ shortcut, iconSize = 30 }: ShortcutGlyphProps) {
-  const customIconUrl = getCustomShortcutIcon(shortcut);
-  const candidates = useMemo(() => getFaviconCandidates(shortcut.url), [shortcut.url]);
+  const iconMode = shortcut.iconMode ?? 'favicon';
+  const uploadedIconUrl = iconMode === 'custom' ? shortcut.customIconDataUrl || '' : '';
+  const brandIconUrl = iconMode === 'favicon' ? getCustomShortcutIcon(shortcut) : '';
+  const candidates = useMemo(() => (iconMode === 'favicon' ? getFaviconCandidates(shortcut.url) : []), [iconMode, shortcut.url]);
   const [candidateIndex, setCandidateIndex] = useState(0);
-  const faviconUrl = customIconUrl || candidates[candidateIndex];
+  const faviconUrl = uploadedIconUrl || brandIconUrl || candidates[candidateIndex];
   const Icon = shortcutIcons[shortcut.icon] ?? shortcutIcons.Home;
+  const hasFramedImage = Boolean(uploadedIconUrl || brandIconUrl);
 
   useEffect(() => {
     setCandidateIndex(0);
-  }, [shortcut.url]);
+  }, [iconMode, shortcut.url]);
 
   return (
     <span
-      className={`shortcut-icon ${customIconUrl ? 'shortcut-icon-brand' : ''}`}
+      className={`shortcut-icon ${hasFramedImage ? 'shortcut-icon-brand' : ''}`}
       style={{ backgroundColor: faviconUrl ? 'rgba(255, 255, 255, 0.92)' : shortcut.color }}
     >
       {faviconUrl ? (
         <img
-          className={customIconUrl ? 'shortcut-brand-image' : 'shortcut-favicon'}
+          className={hasFramedImage ? 'shortcut-brand-image' : 'shortcut-favicon'}
           src={faviconUrl}
           alt=""
           decoding="async"
           loading="lazy"
           onLoad={() => {
-            if (!customIconUrl) rememberFaviconSuccess(shortcut.url, faviconUrl);
+            if (!uploadedIconUrl && !brandIconUrl) rememberFaviconSuccess(shortcut.url, faviconUrl);
           }}
           onError={() => {
-            if (!customIconUrl) {
+            if (!uploadedIconUrl && !brandIconUrl) {
               rememberFaviconFailure(shortcut.url, faviconUrl);
               setCandidateIndex((index) => index + 1);
             }
