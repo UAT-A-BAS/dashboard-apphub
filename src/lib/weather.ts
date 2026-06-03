@@ -6,6 +6,8 @@ const JAKARTA = {
   label: 'Jakarta, Indonesia',
 };
 
+const WEATHER_FETCH_TIMEOUT_MS = 6000;
+
 type OpenMeteoResponse = {
   current: {
     time: string;
@@ -123,9 +125,15 @@ async function reverseGeocode(latitude: number, longitude: number) {
     localityLanguage: 'id',
   }).toString();
 
-  const response = await fetch(url);
+  const response = await fetchWithTimeout(url.toString(), WEATHER_FETCH_TIMEOUT_MS);
   if (!response.ok) return JAKARTA.label;
   return formatCity((await response.json()) as Record<string, unknown>);
+}
+
+function fetchWithTimeout(url: string, timeoutMs: number) {
+  const controller = new AbortController();
+  const timeout = window.setTimeout(() => controller.abort(), timeoutMs);
+  return fetch(url, { signal: controller.signal }).finally(() => window.clearTimeout(timeout));
 }
 
 function readPosition(): Promise<{ latitude: number; longitude: number; usedFallback: boolean }> {
@@ -144,14 +152,13 @@ function readPosition(): Promise<{ latitude: number; longitude: number; usedFall
         });
       },
       () => resolve({ ...JAKARTA, usedFallback: true }),
-      { enableHighAccuracy: false, timeout: 8000, maximumAge: 15 * 60 * 1000 },
+      { enableHighAccuracy: false, timeout: 2500, maximumAge: 30 * 60 * 1000 },
     );
   });
 }
 
 export async function fetchWeather(): Promise<WeatherData> {
   const { latitude, longitude, usedFallback } = await readPosition();
-  const location = usedFallback ? JAKARTA.label : await reverseGeocode(latitude, longitude);
   const params = new URLSearchParams({
     latitude: String(latitude),
     longitude: String(longitude),
@@ -162,7 +169,10 @@ export async function fetchWeather(): Promise<WeatherData> {
     forecast_hours: '12',
   });
 
-  const response = await fetch(`https://api.open-meteo.com/v1/forecast?${params.toString()}`);
+  const [location, response] = await Promise.all([
+    usedFallback ? Promise.resolve(JAKARTA.label) : reverseGeocode(latitude, longitude).catch(() => JAKARTA.label),
+    fetchWithTimeout(`https://api.open-meteo.com/v1/forecast?${params.toString()}`, WEATHER_FETCH_TIMEOUT_MS),
+  ]);
   if (!response.ok) throw new Error('Weather forecast gagal dimuat.');
   const data = (await response.json()) as OpenMeteoResponse;
   const startIndex = Math.max(0, data.hourly.time.findIndex((time) => time >= data.current.time));

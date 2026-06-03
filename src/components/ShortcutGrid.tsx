@@ -1,4 +1,4 @@
-import { ArrowUpRight } from 'lucide-react';
+import { ArrowUpRight } from '../lib/icons';
 import ShortcutGlyph from './ShortcutGlyph';
 import { Shortcut } from '../lib/shortcuts';
 

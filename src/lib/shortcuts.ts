@@ -96,24 +96,6 @@ export function getCustomShortcutIcon(shortcut: Pick<Shortcut, 'name' | 'url'>) 
   return '';
 }
 
-export function getFaviconCandidates(url: string) {
-  try {
-    const parsed = new URL(normalizeUrl(url));
-    const domain = parsed.hostname;
-    const publicIcon = `https://icons.duckduckgo.com/ip3/${encodeURIComponent(domain)}.ico`;
-    if (!domain.includes('.')) return [];
-    if (domain.endsWith('.pages.dev')) return [publicIcon];
-    if (domain.endsWith('.bca.co.id')) return [`${parsed.origin}/favicon.ico`];
-    return [
-      `${parsed.origin}/favicon.ico`,
-      `${parsed.origin}/favicon.svg`,
-      publicIcon,
-    ];
-  } catch {
-    return [];
-  }
-}
-
 export function sanitizeShortcut(input: Partial<Shortcut>, index: number): Shortcut {
   const fallback = defaultShortcuts[index] ?? defaultShortcuts[0];
   const name = String(input.name || fallback.name).trim().slice(0, 48);

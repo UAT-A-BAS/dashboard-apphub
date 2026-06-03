@@ -1,7 +1,6 @@
 import { ChangeEvent, FormEvent, useEffect, useMemo, useState } from 'react';
-import { ArrowDown, ArrowUp, Download, LogOut, Save, ShieldCheck, Upload } from 'lucide-react';
 import { getAdminSession, loginAdmin, logoutAdmin } from '../lib/adminApi';
-import { shortcutIconNames } from '../lib/icons';
+import { ArrowDown, ArrowUp, Download, LogOut, Save, ShieldCheck, shortcutIconNames, Upload } from '../lib/icons';
 import { MAX_SHORTCUTS, readShortcuts, saveShortcuts, Shortcut } from '../lib/shortcuts';
 import ShortcutGlyph from './ShortcutGlyph';
 

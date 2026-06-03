@@ -1,6 +1,5 @@
 import { useEffect, useMemo, useState } from 'react';
-import { Droplets, MapPin, RefreshCcw, Sun, ThermometerSun, Wind } from 'lucide-react';
-import { weatherIcons } from '../lib/icons';
+import { Droplets, MapPin, RefreshCcw, Sun, ThermometerSun, weatherIcons, Wind } from '../lib/icons';
 import {
   fetchWeather,
   formatHour,
@@ -14,32 +13,65 @@ import {
   WeatherMode,
 } from '../lib/weather';
 
+const WEATHER_CACHE_KEY = 'apphub.weather.cache.v1';
+const WEATHER_CACHE_MAX_AGE_MS = 15 * 60 * 1000;
+
 type WeatherPanelProps = {
   compact?: boolean;
+  enableParallax?: boolean;
   onModeChange?: (mode: WeatherMode) => void;
 };
 
-export default function WeatherPanel({ compact = false, onModeChange }: WeatherPanelProps) {
-  const [weather, setWeather] = useState<WeatherData | null>(null);
+function readCachedWeather() {
+  try {
+    const raw = localStorage.getItem(WEATHER_CACHE_KEY);
+    if (!raw) return null;
+    const cached = JSON.parse(raw) as { savedAt: number; data: WeatherData };
+    if (!cached.savedAt || Date.now() - cached.savedAt > WEATHER_CACHE_MAX_AGE_MS) return null;
+    return cached.data;
+  } catch {
+    return null;
+  }
+}
+
+function writeCachedWeather(data: WeatherData) {
+  try {
+    localStorage.setItem(WEATHER_CACHE_KEY, JSON.stringify({ savedAt: Date.now(), data }));
+  } catch {
+    // Cache failure should not affect the dashboard.
+  }
+}
+
+export default function WeatherPanel({ compact = false, enableParallax = true, onModeChange }: WeatherPanelProps) {
+  const [weather, setWeather] = useState<WeatherData | null>(() => readCachedWeather());
   const [error, setError] = useState('');
-  const [loading, setLoading] = useState(true);
+  const [loading, setLoading] = useState(() => !readCachedWeather());
   const [previewMode, setPreviewMode] = useState<WeatherMode | 'auto'>('auto');
 
-  async function loadWeather() {
-    setLoading(true);
+  async function loadWeather(background = false) {
+    if (!background) setLoading(true);
     setError('');
     try {
       const nextWeather = await fetchWeather();
       setWeather(nextWeather);
+      writeCachedWeather(nextWeather);
     } catch (weatherError) {
-      setError(weatherError instanceof Error ? weatherError.message : 'Weather gagal dimuat.');
+      if (!weather) {
+        setError(weatherError instanceof Error ? weatherError.message : 'Weather gagal dimuat.');
+      }
     } finally {
-      setLoading(false);
+      if (!background) setLoading(false);
     }
   }
 
   useEffect(() => {
-    void loadWeather();
+    const run = () => void loadWeather(Boolean(weather));
+    const idle = window.requestIdleCallback?.(run, { timeout: 1200 });
+    if (!idle) {
+      const timer = window.setTimeout(run, 250);
+      return () => window.clearTimeout(timer);
+    }
+    return () => window.cancelIdleCallback?.(idle);
   }, []);
 
   const activeMode = previewMode === 'auto' ? weather?.theme ?? getThemeFromTime() : previewMode;
@@ -66,7 +98,7 @@ export default function WeatherPanel({ compact = false, onModeChange }: WeatherP
 
   if (loading) {
     return (
-      <section className="weather-panel min-h-[210px] animate-pulse" aria-label="Memuat cuaca">
+      <section className="weather-panel min-h-[210px]" aria-label="Memuat cuaca">
         <div className="h-16 w-16 rounded-2xl bg-slate-200/80" />
         <div className="space-y-3">
           <div className="h-9 w-28 rounded-full bg-slate-200/80" />
@@ -98,8 +130,8 @@ export default function WeatherPanel({ compact = false, onModeChange }: WeatherP
     <section
       className={`weather-panel ${compact ? 'weather-panel-compact' : ''}`}
       aria-label="Cuaca saat ini"
-      onPointerMove={updatePanelTilt}
-      onPointerLeave={resetPanelTilt}
+      onPointerMove={enableParallax ? updatePanelTilt : undefined}
+      onPointerLeave={enableParallax ? resetPanelTilt : undefined}
     >
       <div className="weather-panel-head">
         <span className="weather-mode-badge">{modeLabel}</span>

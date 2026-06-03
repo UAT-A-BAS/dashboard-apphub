@@ -401,6 +401,7 @@ a {
   inset: 0;
   z-index: 1;
   overflow: hidden;
+  contain: strict;
   pointer-events: none;
 }
 
@@ -605,6 +606,7 @@ a {
     background-color 260ms ease,
     border-color 260ms ease,
     box-shadow 260ms ease;
+  contain: layout paint;
 }
 
 .dashboard-hero-card::before,
@@ -660,7 +662,7 @@ a {
     background-color 260ms ease,
     border-color 260ms ease,
     box-shadow 260ms ease;
-  will-change: transform;
+  contain: layout paint;
 }
 
 .weather-panel:hover {
@@ -997,7 +999,7 @@ a {
     background-color 180ms ease,
     box-shadow 220ms ease,
     border-color 180ms ease;
-  will-change: transform;
+  contain: layout paint;
 }
 
 .shortcut-card::before {
@@ -1167,13 +1169,6 @@ a {
     inset 0 1px 0 rgba(255, 255, 255, 0.56);
 }
 
-.shortcut-favicon {
-  width: 44px;
-  height: 44px;
-  object-fit: contain;
-  border-radius: 16px;
-}
-
 .shortcut-icon-brand {
   width: 68px;
   height: 68px;
@@ -1240,9 +1235,29 @@ a {
   animation: none;
 }
 
+.home-page[data-render='lite'] *,
+.home-page[data-render='lite'] *::before,
+.home-page[data-render='lite'] *::after {
+  animation: none !important;
+  transition-duration: 120ms !important;
+}
+
 .home-page[data-render='lite'] .hero-glass,
 .home-page[data-render='lite'] .weather-atmosphere {
   opacity: 0.72;
+}
+
+.home-page[data-render='lite'] .weather-atmosphere {
+  display: none;
+}
+
+.home-page[data-render='lite'] .hero-glass {
+  opacity: 0.42;
+}
+
+.home-page[data-render='lite'] .dashboard-hero-card::after,
+.home-page[data-render='lite'] .weather-panel::after {
+  opacity: 0.16;
 }
 
 .home-page[data-render='lite'] .dashboard-hero-card,
@@ -1276,6 +1291,16 @@ a {
 .home-page[data-render='lite'] .shortcut-card:hover,
 .home-page[data-render='lite'] .shortcut-card:focus-visible {
   transform: translateY(-4px) scale(1.01);
+}
+
+.home-page[data-render='lite'] .shortcut-card::before {
+  opacity: 0.34;
+}
+
+.home-page[data-render='lite'] .shortcut-card:hover::before,
+.home-page[data-render='lite'] .shortcut-card:focus-visible::before {
+  opacity: 0.58;
+  transform: none;
 }
 
 .home-page[data-render='lite'][data-theme='lightRain'] .weather-atmosphere::before,
@@ -1312,8 +1337,8 @@ a {
 
 .admin-shell {
   background:
-    linear-gradient(135deg, rgba(248, 250, 252, 0.94), rgba(226, 232, 240, 0.86)),
-    url('/weather-moods.png') center / cover no-repeat;
+    radial-gradient(circle at 12% 8%, rgba(226, 232, 240, 0.88), transparent 24rem),
+    linear-gradient(135deg, rgba(248, 250, 252, 0.98), rgba(226, 232, 240, 0.92));
   color: #0f172a;
 }
 
@@ -1552,11 +1577,6 @@ a {
     width: 48px;
     height: 48px;
     border-radius: 14px;
-  }
-
-  .shortcut-favicon {
-    width: 31px;
-    height: 31px;
   }
 
   .shortcut-brand-image {
