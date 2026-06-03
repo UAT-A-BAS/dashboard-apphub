@@ -1,5 +1,6 @@
+import { useEffect, useMemo, useState } from 'react';
 import { shortcutIcons } from '../lib/icons';
-import { getCustomShortcutIcon, Shortcut } from '../lib/shortcuts';
+import { getCustomShortcutIcon, getFaviconCandidates, Shortcut } from '../lib/shortcuts';
 
 type ShortcutGlyphProps = {
   shortcut: Shortcut;
@@ -8,20 +9,30 @@ type ShortcutGlyphProps = {
 
 export default function ShortcutGlyph({ shortcut, iconSize = 30 }: ShortcutGlyphProps) {
   const customIconUrl = getCustomShortcutIcon(shortcut);
+  const candidates = useMemo(() => getFaviconCandidates(shortcut.url), [shortcut.url]);
+  const [candidateIndex, setCandidateIndex] = useState(0);
+  const faviconUrl = customIconUrl || candidates[candidateIndex];
   const Icon = shortcutIcons[shortcut.icon] ?? shortcutIcons.Home;
+
+  useEffect(() => {
+    setCandidateIndex(0);
+  }, [shortcut.url]);
 
   return (
     <span
       className={`shortcut-icon ${customIconUrl ? 'shortcut-icon-brand' : ''}`}
-      style={{ backgroundColor: customIconUrl ? 'rgba(255, 255, 255, 0.92)' : shortcut.color }}
+      style={{ backgroundColor: faviconUrl ? 'rgba(255, 255, 255, 0.92)' : shortcut.color }}
     >
-      {customIconUrl ? (
+      {faviconUrl ? (
         <img
-          className="shortcut-brand-image"
-          src={customIconUrl}
+          className={customIconUrl ? 'shortcut-brand-image' : 'shortcut-favicon'}
+          src={faviconUrl}
           alt=""
           decoding="async"
           loading="lazy"
+          onError={() => {
+            if (!customIconUrl) setCandidateIndex((index) => index + 1);
+          }}
         />
       ) : (
         <Icon size={iconSize} strokeWidth={2} />

@@ -573,12 +573,12 @@ a {
 }
 
 .hero-motivation {
-  max-width: 34rem;
+  max-width: 420px;
   margin-top: 0.85rem;
   color: var(--hero-muted);
-  font-size: clamp(0.96rem, 1.22vw, 1.16rem);
-  font-weight: 650;
-  line-height: 1.55;
+  font-size: clamp(0.94rem, 1.05vw, 1.04rem);
+  font-weight: 500;
+  line-height: 1.5;
   letter-spacing: 0;
   text-wrap: balance;
 }
@@ -1169,6 +1169,13 @@ a {
     inset 0 1px 0 rgba(255, 255, 255, 0.56);
 }
 
+.shortcut-favicon {
+  width: 44px;
+  height: 44px;
+  object-fit: contain;
+  border-radius: 16px;
+}
+
 .shortcut-icon-brand {
   width: 68px;
   height: 68px;
@@ -1577,6 +1584,11 @@ a {
     width: 48px;
     height: 48px;
     border-radius: 14px;
+  }
+
+  .shortcut-favicon {
+    width: 31px;
+    height: 31px;
   }
 
   .shortcut-brand-image {

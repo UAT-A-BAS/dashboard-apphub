@@ -8,6 +8,19 @@ const JAKARTA = {
 
 const WEATHER_FETCH_TIMEOUT_MS = 6000;
 
+const MOTIVATIONAL_QUOTES = [
+  'Kualitas bukan kebetulan, tetapi hasil dari proses yang konsisten.',
+  'Setiap pengujian yang teliti membawa sistem lebih dekat pada keandalan.',
+  'Detail kecil sering kali menentukan hasil yang besar.',
+  'Fokus pada proses, hasil yang baik akan mengikuti.',
+  'Validasi yang baik adalah fondasi dari rilis yang percaya diri.',
+  'Pastikan setiap skenario diuji dengan jelas, rapi, dan terukur.',
+  'Kemajuan kecil yang konsisten menghasilkan kualitas yang besar.',
+  'Kerja yang rapi hari ini mempermudah keputusan esok hari.',
+  'Kualitas dimulai dari perhatian pada detail kecil.',
+  'Setiap langkah yang terukur mengurangi risiko di masa depan.',
+];
+
 type OpenMeteoResponse = {
   current: {
     time: string;
@@ -220,11 +233,7 @@ export function getGreeting(date = new Date()) {
 }
 
 export function getMotivationalGreeting(date = new Date()) {
-  const hour = date.getHours();
-  if (hour < 11) return 'Mulailah hari dengan pengujian yang terarah dan terstruktur.';
-  if (hour < 15) return 'Tetap fokus pada detail yang menjaga kualitas tetap tinggi.';
-  if (hour < 18) return 'Kemajuan kecil yang konsisten membentuk hasil yang berkualitas.';
-  return 'Pastikan setiap pekerjaan hari ini meninggalkan dampak yang berarti.';
+  return MOTIVATIONAL_QUOTES[date.getDate() % MOTIVATIONAL_QUOTES.length];
 }
 
 export function formatHour(value: string) {
