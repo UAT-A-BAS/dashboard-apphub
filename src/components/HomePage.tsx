@@ -1,7 +1,7 @@
 import { useEffect, useState } from 'react';
 import ShortcutGrid from './ShortcutGrid';
 import WeatherPanel, { GreetingBlock } from './WeatherPanel';
-import { readShortcuts, Shortcut } from '../lib/shortcuts';
+import { fetchGlobalShortcuts, readShortcuts, saveShortcuts, Shortcut } from '../lib/shortcuts';
 import { getThemeFromTime, WeatherMode } from '../lib/weather';
 
 function getInitialRenderMode(): 'standard' | 'lite' {
@@ -22,6 +22,13 @@ export default function HomePage() {
       window.removeEventListener('storage', sync);
       window.removeEventListener('shortcuts-updated', sync);
     };
+  }, []);
+
+  useEffect(() => {
+    void fetchGlobalShortcuts().then((globalShortcuts) => {
+      if (!globalShortcuts) return;
+      setShortcuts(saveShortcuts(globalShortcuts));
+    });
   }, []);
 
   useEffect(() => {

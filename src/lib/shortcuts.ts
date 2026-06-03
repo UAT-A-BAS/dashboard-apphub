@@ -290,3 +290,31 @@ export function saveShortcuts(shortcuts: Shortcut[]) {
   window.dispatchEvent(new Event('shortcuts-updated'));
   return clean;
 }
+
+export async function fetchGlobalShortcuts() {
+  const response = await fetch('/api/shortcuts', {
+    cache: 'no-store',
+  });
+  if (!response.ok) return null;
+  const payload = (await response.json()) as { shortcuts?: unknown };
+  if (!Array.isArray(payload.shortcuts)) return null;
+  return payload.shortcuts.slice(0, MAX_SHORTCUTS).map((item, index) => sanitizeShortcut(item as Partial<Shortcut>, index));
+}
+
+export async function saveGlobalShortcuts(shortcuts: Shortcut[]) {
+  const clean = shortcuts.slice(0, MAX_SHORTCUTS).map((item, index) => sanitizeShortcut(item, index));
+  const response = await fetch('/api/admin/shortcuts', {
+    method: 'PUT',
+    credentials: 'include',
+    headers: { 'content-type': 'application/json' },
+    body: JSON.stringify({ shortcuts: clean }),
+  });
+
+  if (!response.ok) {
+    const payload = await response.json().catch(() => ({ message: 'Gagal menyimpan shortcut global.' }));
+    throw new Error(String(payload.message || 'Gagal menyimpan shortcut global.'));
+  }
+
+  saveShortcuts(clean);
+  return clean;
+}

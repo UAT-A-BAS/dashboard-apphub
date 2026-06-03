@@ -1,7 +1,7 @@
 import { ChangeEvent, FormEvent, useEffect, useMemo, useState } from 'react';
 import { getAdminSession, loginAdmin, logoutAdmin } from '../lib/adminApi';
 import { ArrowDown, ArrowUp, Download, LogOut, Plus, Save, ShieldCheck, shortcutIconNames, Trash, Upload } from '../lib/icons';
-import { createShortcutDraft, MAX_SHORTCUTS, readShortcuts, saveShortcuts, Shortcut } from '../lib/shortcuts';
+import { createShortcutDraft, fetchGlobalShortcuts, MAX_SHORTCUTS, readShortcuts, saveGlobalShortcuts, saveShortcuts, Shortcut } from '../lib/shortcuts';
 import ShortcutGlyph from './ShortcutGlyph';
 
 type Notice = {
@@ -21,6 +21,13 @@ export default function AdminPage() {
       .then(setAuthenticated)
       .finally(() => setChecking(false));
   }, []);
+
+  useEffect(() => {
+    if (!authenticated) return;
+    void fetchGlobalShortcuts().then((globalShortcuts) => {
+      if (globalShortcuts) setShortcuts(globalShortcuts);
+    });
+  }, [authenticated]);
 
   const canSave = useMemo(
     () => shortcuts.length > 0 && shortcuts.length <= MAX_SHORTCUTS && shortcuts.every((item) => item.name.trim() && item.url.trim()),
@@ -113,9 +120,19 @@ export default function AdminPage() {
     updateShortcut(id, { customIconDataUrl: undefined });
   }
 
-  function handleSave() {
-    setShortcuts(saveShortcuts(shortcuts));
-    setNotice({ tone: 'success', message: 'Shortcut disimpan di localStorage browser ini.' });
+  async function handleSave() {
+    try {
+      const clean = await saveGlobalShortcuts(shortcuts);
+      setShortcuts(clean);
+      setNotice({ tone: 'success', message: 'Shortcut global disimpan. Perubahan berlaku untuk semua pengguna.' });
+    } catch (error) {
+      const clean = saveShortcuts(shortcuts);
+      setShortcuts(clean);
+      setNotice({
+        tone: 'error',
+        message: `${error instanceof Error ? error.message : 'Gagal menyimpan shortcut global.'} Perubahan hanya tersimpan lokal di browser ini.`,
+      });
+    }
   }
 
   function exportJson() {
@@ -205,7 +222,7 @@ export default function AdminPage() {
             <p className="text-sm font-semibold uppercase tracking-[0.12em] text-slate-500">Private Owner Area</p>
             <h1 className="mt-2 text-4xl font-semibold tracking-normal text-slate-950">Edit Shortcuts</h1>
           <p className="mt-2 max-w-2xl text-sm leading-6 text-slate-600">
-              Perubahan urutan dan aplikasi tersimpan di localStorage browser admin. Export JSON untuk backup atau pindah perangkat.
+              Perubahan urutan dan aplikasi disimpan sebagai konfigurasi global. Export JSON tetap tersedia untuk backup.
             </p>
           </div>
           <button className="secondary-button" type="button" onClick={() => void handleLogout()}>
@@ -318,7 +335,7 @@ export default function AdminPage() {
             <Plus size={18} />
             Tambah Aplikasi
           </button>
-          <button className="primary-button" type="button" onClick={handleSave} disabled={!canSave}>
+          <button className="primary-button" type="button" onClick={() => void handleSave()} disabled={!canSave}>
             <Save size={18} />
             Save Perubahan
           </button>
