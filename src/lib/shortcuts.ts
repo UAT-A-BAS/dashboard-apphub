@@ -1,9 +1,10 @@
 import { ShortcutIconName, shortcutIconNames } from './icons';
 
-export const SHORTCUT_STORAGE_KEY = 'apphub.shortcuts.v2';
+const LEGACY_SHORTCUT_STORAGE_KEY = 'apphub.shortcuts.v2';
+export const SHORTCUT_STORAGE_KEY = 'apphub.shortcuts.v3';
 const FAVICON_CACHE_KEY = 'apphub.favicons.v1';
 const FAVICON_CACHE_MAX_AGE_MS = 7 * 24 * 60 * 60 * 1000;
-export const MAX_SHORTCUTS = 8;
+export const MAX_SHORTCUTS = 50;
 
 export type Shortcut = {
   id: string;
@@ -69,6 +70,34 @@ export const defaultShortcuts: Shortcut[] = [
     url: 'https://mybcaportal/Pages/Homepage.aspx',
     icon: 'Settings',
     color: '#52525b',
+  },
+  {
+    id: 'yumi',
+    name: 'Yumi',
+    url: 'https://yumi.intra.bca.co.id/',
+    icon: 'Sparkles',
+    color: '#0f766e',
+  },
+  {
+    id: 'teman',
+    name: 'TEMAN',
+    url: 'https://digitalab.bca.co.id/TFD_Main/MyProjectList',
+    icon: 'Users',
+    color: '#1d4ed8',
+  },
+  {
+    id: 'training-request',
+    name: 'List Request Training',
+    url: 'https://bcaoffice365.sharepoint.com/:l:/r/sites/KLA/Lists/Training?e=CLwUm2',
+    icon: 'BookOpenText',
+    color: '#7c3aed',
+  },
+  {
+    id: 'gfb-request',
+    name: 'List Request GFB',
+    url: 'https://bcaoffice365.sharepoint.com/sites/TransportSolutions/Lists/Request%20GFB/AllItems.aspx?&xsdata=MDV8MDJ8fDI5YzBhNTFmMTJmODQyNTFkZmU4MDhkZWMxMWZjNTcwfDU5ZGFmMTQwNGFlZTRiNzc4MGY0NGVhOGJlYzg2YzJlfDB8MHw2MzkxNjA1MzkzMzM4NDQ5Njh8VW5rbm93bnxWR1ZoYlhOVFpXTjFjbWwwZVZObGNuWnBZMlY4ZXlKRFFTSTZJbFJsWVcxelgwRlVVRk5sY25acFkyVmZVMUJQVEU5R0lpd2lWaUk2SWpBdU1DNHdNREF3SWl3aVVDSTZJbGRwYmpNeUlpd2lRVTRpT2lKUGRHaGxjaUlzSWxkVUlqb3hNWDA9fDF8TDJOb1lYUnpMekU1T2pWbVpEVXpOamM1WldKaU1qUTBaRE00TXpjME9XVXlZMlkyTmpRMll6ZzRRSFJvY21WaFpDNTJNaTl0WlhOellXZGxjeTh4Tnpnd05EVTNNVEUwTmpJNHw5YzlhOWM0NWJiOTU0NzViNTY4ODA4ZGVjMTFmYzU3MHw2ZjViOTBiMzE3ODQ0OWZiYjAyYzMxN2RiNzNhZTFiNQ%3D%3D&sdata=RHYwQ0MwZmkwWGlXQmJuaVdiSnFBbXVTblZvL1RoSUJNQjRBOFJXNXlxOD0%3D&ovuser=59daf140-4aee-4b77-80f4-4ea8bec86c2e%2Cu075060%40bca.co.id',
+    icon: 'CalendarDays',
+    color: '#0369a1',
   },
 ];
 
@@ -195,14 +224,48 @@ export function sanitizeShortcut(input: Partial<Shortcut>, index: number): Short
   };
 }
 
+function parseShortcutList(raw: string | null) {
+  if (!raw) return null;
+  const parsed = JSON.parse(raw);
+  const list = Array.isArray(parsed) ? parsed : parsed.shortcuts;
+  return Array.isArray(list) ? list : null;
+}
+
+function appendMissingDefaults(shortcuts: Shortcut[]) {
+  const ids = new Set(shortcuts.map((item) => item.id));
+  const names = new Set(shortcuts.map((item) => item.name.toLowerCase()));
+  const next = [...shortcuts];
+  defaultShortcuts.forEach((shortcut) => {
+    if (!ids.has(shortcut.id) && !names.has(shortcut.name.toLowerCase())) {
+      next.push(shortcut);
+    }
+  });
+  return next.slice(0, MAX_SHORTCUTS);
+}
+
+export function createShortcutDraft(index: number): Shortcut {
+  return {
+    id: crypto.randomUUID(),
+    name: `Aplikasi ${index + 1}`,
+    url: 'https://example.com',
+    icon: 'Home',
+    color: '#334155',
+  };
+}
+
 export function readShortcuts(): Shortcut[] {
   try {
-    const raw = localStorage.getItem(SHORTCUT_STORAGE_KEY);
-    if (!raw) return defaultShortcuts;
-    const parsed = JSON.parse(raw);
-    const list = Array.isArray(parsed) ? parsed : parsed.shortcuts;
-    if (!Array.isArray(list)) return defaultShortcuts;
-    return list.slice(0, MAX_SHORTCUTS).map((item, index) => sanitizeShortcut(item, index));
+    const currentList = parseShortcutList(localStorage.getItem(SHORTCUT_STORAGE_KEY));
+    if (currentList) return currentList.slice(0, MAX_SHORTCUTS).map((item, index) => sanitizeShortcut(item, index));
+
+    const legacyList = parseShortcutList(localStorage.getItem(LEGACY_SHORTCUT_STORAGE_KEY));
+    if (legacyList) {
+      const migrated = appendMissingDefaults(legacyList.slice(0, MAX_SHORTCUTS).map((item, index) => sanitizeShortcut(item, index)));
+      localStorage.setItem(SHORTCUT_STORAGE_KEY, JSON.stringify(migrated, null, 2));
+      return migrated;
+    }
+
+    return defaultShortcuts;
   } catch {
     return defaultShortcuts;
   }

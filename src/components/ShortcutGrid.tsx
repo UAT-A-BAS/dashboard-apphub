@@ -9,7 +9,7 @@ type ShortcutGridProps = {
 export default function ShortcutGrid({ shortcuts }: ShortcutGridProps) {
   return (
     <section className="shortcut-grid" aria-label="Shortcut favorit">
-      {shortcuts.slice(0, 8).map((shortcut) => (
+      {shortcuts.map((shortcut) => (
         <a
           className="shortcut-card group"
           href={shortcut.url}

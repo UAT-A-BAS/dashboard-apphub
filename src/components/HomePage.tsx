@@ -38,7 +38,7 @@ export default function HomePage() {
   }, []);
 
   return (
-    <main className="home-page min-h-dvh overflow-hidden text-slate-900" data-theme={theme} data-render={renderMode}>
+    <main className="home-page min-h-dvh overflow-x-hidden text-slate-900" data-theme={theme} data-render={renderMode}>
       <div className="home-surface">
         <div className="weather-atmosphere" aria-hidden="true" />
         <div className="hero-glass" />

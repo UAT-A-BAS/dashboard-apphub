@@ -967,8 +967,8 @@ a {
 
 .shortcut-grid {
   display: grid;
-  grid-template-columns: repeat(4, minmax(0, 1fr));
-  gap: clamp(0.9rem, 1.25vw, 1.15rem);
+  grid-template-columns: repeat(5, minmax(0, 1fr));
+  gap: clamp(0.72rem, 1vw, 1rem);
   width: 100%;
   min-width: 0;
   perspective: 1200px;
@@ -978,7 +978,7 @@ a {
   position: relative;
   isolation: isolate;
   display: flex;
-  min-height: clamp(120px, 11.6vh, 138px);
+  min-height: clamp(106px, 10.5vh, 128px);
   min-width: 0;
   flex-direction: column;
   align-items: center;
@@ -986,7 +986,7 @@ a {
   border: 1px solid color-mix(in srgb, var(--panel-border) 86%, rgba(255, 255, 255, 0.14));
   border-radius: 30px;
   background: var(--launch-surface);
-  padding: clamp(0.9rem, 1.15vw, 1.2rem);
+  padding: clamp(0.72rem, 0.95vw, 1rem);
   text-decoration: none;
   box-shadow:
     0 16px 42px var(--launch-glow),
@@ -1100,7 +1100,7 @@ a {
 .shortcut-label {
   max-width: 100%;
   color: var(--panel-text);
-  font-size: clamp(0.92rem, 0.88vw, 1.08rem);
+  font-size: clamp(0.82rem, 0.78vw, 1rem);
   font-weight: 900;
   line-height: 1.18;
   text-align: center;
@@ -1147,10 +1147,10 @@ a {
   position: relative;
   z-index: 1;
   display: grid;
-  width: 68px;
-  height: 68px;
+  width: 58px;
+  height: 58px;
   place-items: center;
-  border-radius: 22px;
+  border-radius: 18px;
   color: white;
   overflow: hidden;
   box-shadow:
@@ -1170,15 +1170,15 @@ a {
 }
 
 .shortcut-favicon {
-  width: 44px;
-  height: 44px;
+  width: 38px;
+  height: 38px;
   object-fit: contain;
-  border-radius: 16px;
+  border-radius: 14px;
 }
 
 .shortcut-icon-brand {
-  width: 68px;
-  height: 68px;
+  width: 58px;
+  height: 58px;
   padding: 0;
 }
 
@@ -1440,6 +1440,15 @@ a {
   border: 1px solid #cbd5e1;
   background: rgba(255, 255, 255, 0.9);
   color: #1e293b;
+}
+
+.danger-button {
+  color: #b91c1c;
+}
+
+.danger-button:hover {
+  border-color: #fecaca;
+  background: #fff1f2;
 }
 
 .primary-button:hover,
