@@ -42,6 +42,31 @@ type OpenMeteoResponse = {
   };
 };
 
+type WttrResponse = {
+  current_condition?: Array<{
+    FeelsLikeC?: string;
+    humidity?: string;
+    temp_C?: string;
+    uvIndex?: string;
+    weatherCode?: string;
+    weatherDesc?: Array<{ value?: string }>;
+    windspeedKmph?: string;
+  }>;
+  nearest_area?: Array<{
+    areaName?: Array<{ value?: string }>;
+    country?: Array<{ value?: string }>;
+  }>;
+  weather?: Array<{
+    date?: string;
+    hourly?: Array<{
+      chanceofrain?: string;
+      tempC?: string;
+      time?: string;
+      weatherCode?: string;
+    }>;
+  }>;
+};
+
 export type WeatherPoint = {
   time: string;
   temperature: number;
@@ -108,6 +133,16 @@ function describeWeather(code: number): { label: string; icon: WeatherIconName }
   return { label: 'Berangin', icon: 'Wind' };
 }
 
+function describeWttrWeather(code: number, fallbackLabel = 'Cuaca tersedia'): { label: string; icon: WeatherIconName } {
+  if (code === 113) return { label: 'Cerah', icon: 'Sun' };
+  if ([116, 143].includes(code)) return { label: 'Cerah berawan', icon: 'CloudSun' };
+  if ([119, 122, 248, 260].includes(code)) return { label: 'Berawan', icon: 'Cloud' };
+  if ([176, 263, 266, 281, 284, 293, 296, 353].includes(code)) return { label: 'Gerimis', icon: 'CloudDrizzle' };
+  if ([185, 299, 302, 305, 308, 311, 314, 317, 350, 356, 359, 362, 365].includes(code)) return { label: 'Hujan', icon: 'CloudRain' };
+  if ([386, 389, 392, 395].includes(code)) return { label: 'Badai petir', icon: 'CloudLightning' };
+  return { label: fallbackLabel, icon: 'Wind' };
+}
+
 function getClearMode(date: Date, isDay: boolean): WeatherMode {
   const hour = date.getHours();
   if (!isDay || hour < 5 || hour >= 19) return 'clearNight';
@@ -123,6 +158,25 @@ export function getThemeFromWeather(code: number, isDay: boolean, date = new Dat
   if ([3, 45, 48].includes(code)) return isDay && date.getHours() < 19 ? 'cloudy' : 'cloudyNight';
   if ([1, 2].includes(code)) return 'partlyCloudy';
   return getClearMode(date, isDay);
+}
+
+function getThemeFromWttrWeather(code: number, isDay: boolean, date = new Date()): WeatherMode {
+  if ([386, 389, 392, 395].includes(code)) return 'thunderstorm';
+  if ([302, 305, 308, 314, 317, 350, 356, 359, 362, 365].includes(code)) return 'heavyRain';
+  if ([176, 185, 263, 266, 281, 284, 293, 296, 299, 311, 353].includes(code)) return 'lightRain';
+  if ([119, 122, 143, 248, 260].includes(code)) return isDay && date.getHours() < 19 ? 'cloudy' : 'cloudyNight';
+  if (code === 116) return 'partlyCloudy';
+  return getClearMode(date, isDay);
+}
+
+function mapWttrToOpenMeteoCode(code: number) {
+  if ([386, 389, 392, 395].includes(code)) return 95;
+  if ([302, 305, 308, 314, 317, 350, 356, 359, 362, 365].includes(code)) return 65;
+  if ([176, 185, 263, 266, 281, 284, 293, 296, 299, 311, 353].includes(code)) return 61;
+  if ([119, 122, 143, 248, 260].includes(code)) return 3;
+  if (code === 116) return 2;
+  if (code === 113) return 0;
+  return 3;
 }
 
 function formatCity(payload: Record<string, unknown>) {
@@ -148,6 +202,18 @@ function fetchWithTimeout(url: string, timeoutMs: number) {
   const controller = new AbortController();
   const timeout = window.setTimeout(() => controller.abort(), timeoutMs);
   return fetch(url, { signal: controller.signal }).finally(() => window.clearTimeout(timeout));
+}
+
+function sleep(ms: number) {
+  return new Promise((resolve) => window.setTimeout(resolve, ms));
+}
+
+async function fetchForecastWithRetry(url: string) {
+  const firstResponse = await fetchWithTimeout(url, WEATHER_FETCH_TIMEOUT_MS);
+  if (firstResponse.ok || ![429, 500, 502, 503, 504].includes(firstResponse.status)) return firstResponse;
+  console.info(`Weather provider returned ${firstResponse.status}. Retrying once.`);
+  await sleep(450);
+  return fetchWithTimeout(url, WEATHER_FETCH_TIMEOUT_MS);
 }
 
 export function isWeatherAbortError(error: unknown) {
@@ -188,21 +254,33 @@ function readPosition(): Promise<{ latitude: number; longitude: number; usedFall
 export async function fetchWeather(): Promise<WeatherData> {
   const { latitude, longitude, usedFallback } = await readPosition();
   try {
-    return await fetchWeatherForLocation(latitude, longitude, usedFallback);
+    return await fetchOpenMeteoWeatherForLocation(latitude, longitude, usedFallback);
   } catch (error) {
     logWeatherError('Weather request failed. Retrying Jakarta fallback when possible.', error);
     if (!usedFallback) {
       try {
-        return await fetchWeatherForLocation(JAKARTA.latitude, JAKARTA.longitude, true);
+        return await fetchOpenMeteoWeatherForLocation(JAKARTA.latitude, JAKARTA.longitude, true);
       } catch (fallbackError) {
         logWeatherError('Jakarta fallback weather request failed.', fallbackError);
+      }
+    }
+    try {
+      return await fetchWttrWeatherForLocation(latitude, longitude, usedFallback);
+    } catch (backupError) {
+      logWeatherError('Backup weather provider request failed.', backupError);
+      if (!usedFallback) {
+        try {
+          return await fetchWttrWeatherForLocation(JAKARTA.latitude, JAKARTA.longitude, true);
+        } catch (jakartaBackupError) {
+          logWeatherError('Backup Jakarta weather provider request failed.', jakartaBackupError);
+        }
       }
     }
     throw new Error(WEATHER_UNAVAILABLE_MESSAGE);
   }
 }
 
-async function fetchWeatherForLocation(latitude: number, longitude: number, usedFallback: boolean): Promise<WeatherData> {
+async function fetchOpenMeteoWeatherForLocation(latitude: number, longitude: number, usedFallback: boolean): Promise<WeatherData> {
   const params = new URLSearchParams({
     latitude: String(latitude),
     longitude: String(longitude),
@@ -210,12 +288,11 @@ async function fetchWeatherForLocation(latitude: number, longitude: number, used
     hourly: 'temperature_2m,weather_code,precipitation_probability,uv_index',
     timezone: 'auto',
     forecast_days: '1',
-    forecast_hours: '12',
   });
 
   const [location, response] = await Promise.all([
     usedFallback ? Promise.resolve(JAKARTA.label) : reverseGeocode(latitude, longitude).catch(() => JAKARTA.label),
-    fetchWithTimeout(`https://api.open-meteo.com/v1/forecast?${params.toString()}`, WEATHER_FETCH_TIMEOUT_MS),
+    fetchForecastWithRetry(`https://api.open-meteo.com/v1/forecast?${params.toString()}`),
   ]);
   if (!response.ok) throw new Error('Weather forecast gagal dimuat.');
   const data = (await response.json()) as OpenMeteoResponse;
@@ -246,6 +323,65 @@ async function fetchWeatherForLocation(latitude: number, longitude: number, used
     icon: condition.icon,
     theme: getThemeFromWeather(data.current.weather_code, data.current.is_day === 1, currentDate),
     hourly,
+    usedFallback,
+  };
+}
+
+function parseNumber(value: unknown, fallback = 0) {
+  const parsed = Number(value);
+  return Number.isFinite(parsed) ? parsed : fallback;
+}
+
+function formatWttrLocation(data: WttrResponse, usedFallback: boolean) {
+  if (usedFallback) return JAKARTA.label;
+  const area = data.nearest_area?.[0];
+  const city = area?.areaName?.[0]?.value?.trim();
+  const country = area?.country?.[0]?.value?.trim();
+  return [city, country].filter(Boolean).join(', ') || JAKARTA.label;
+}
+
+function buildWttrHourly(data: WttrResponse): WeatherPoint[] {
+  const day = data.weather?.[0];
+  const date = day?.date || new Date().toISOString().slice(0, 10);
+  return (day?.hourly || []).slice(0, 6).map((point) => {
+    const rawTime = String(point.time || '0').padStart(4, '0');
+    const hour = rawTime.slice(0, -2).padStart(2, '0');
+    const minute = rawTime.slice(-2);
+    return {
+      time: `${date}T${hour}:${minute}:00`,
+      temperature: Math.round(parseNumber(point.tempC)),
+      weatherCode: mapWttrToOpenMeteoCode(parseNumber(point.weatherCode)),
+      precipitation: Math.round(parseNumber(point.chanceofrain)),
+    };
+  });
+}
+
+async function fetchWttrWeatherForLocation(latitude: number, longitude: number, usedFallback: boolean): Promise<WeatherData> {
+  const response = await fetchForecastWithRetry(`https://wttr.in/${latitude},${longitude}?format=j1`);
+  if (!response.ok) throw new Error('Backup weather forecast gagal dimuat.');
+
+  const data = (await response.json()) as WttrResponse;
+  const current = data.current_condition?.[0];
+  if (!current) throw new Error('Backup weather forecast tidak lengkap.');
+
+  const wttrWeatherCode = parseNumber(current.weatherCode);
+  const condition = describeWttrWeather(wttrWeatherCode, current.weatherDesc?.[0]?.value || 'Cuaca tersedia');
+  const currentDate = new Date();
+  const isDay = currentDate.getHours() >= 5 && currentDate.getHours() < 19;
+
+  return {
+    location: formatWttrLocation(data, usedFallback),
+    temperature: Math.round(parseNumber(current.temp_C)),
+    apparentTemperature: Math.round(parseNumber(current.FeelsLikeC, parseNumber(current.temp_C))),
+    humidity: Math.round(parseNumber(current.humidity)),
+    windSpeed: Math.round(parseNumber(current.windspeedKmph)),
+    uvIndex: Math.round(parseNumber(current.uvIndex)),
+    weatherCode: mapWttrToOpenMeteoCode(wttrWeatherCode),
+    isDay,
+    condition: condition.label,
+    icon: condition.icon,
+    theme: getThemeFromWttrWeather(wttrWeatherCode, isDay, currentDate),
+    hourly: buildWttrHourly(data),
     usedFallback,
   };
 }

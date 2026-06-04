@@ -17,6 +17,7 @@ import {
 
 const WEATHER_CACHE_KEY = 'apphub.weather.cache.v1';
 const WEATHER_CACHE_MAX_AGE_MS = 15 * 60 * 1000;
+const WEATHER_STALE_CACHE_MAX_AGE_MS = 12 * 60 * 60 * 1000;
 
 type WeatherPanelProps = {
   compact?: boolean;
@@ -24,12 +25,12 @@ type WeatherPanelProps = {
   onModeChange?: (mode: WeatherMode) => void;
 };
 
-function readCachedWeather() {
+function readCachedWeather(maxAgeMs = WEATHER_CACHE_MAX_AGE_MS) {
   try {
     const raw = localStorage.getItem(WEATHER_CACHE_KEY);
     if (!raw) return null;
     const cached = JSON.parse(raw) as { savedAt: number; data: WeatherData };
-    if (!cached.savedAt || Date.now() - cached.savedAt > WEATHER_CACHE_MAX_AGE_MS) return null;
+    if (!cached.savedAt || Date.now() - cached.savedAt > maxAgeMs) return null;
     return cached.data;
   } catch {
     return null;
@@ -64,6 +65,12 @@ export default function WeatherPanel({ compact = false, enableParallax = true, o
         console.warn('Weather request failed.', weatherError);
       }
       if (!weather) {
+        const staleWeather = readCachedWeather(WEATHER_STALE_CACHE_MAX_AGE_MS);
+        if (staleWeather) {
+          setWeather(staleWeather);
+          setError('');
+          return;
+        }
         setError(WEATHER_UNAVAILABLE_MESSAGE);
       }
     } finally {
