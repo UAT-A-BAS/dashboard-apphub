@@ -1031,8 +1031,28 @@ a {
   align-items: center;
   justify-content: space-between;
   gap: 1rem;
+  width: 100%;
+  border: 0;
+  border-radius: 18px;
+  background: transparent;
   padding-inline: 0.18rem;
   color: var(--panel-text);
+  cursor: pointer;
+  text-align: left;
+  transition:
+    background-color 180ms ease,
+    color 180ms ease;
+}
+
+.shortcut-section-head:hover {
+  background: color-mix(in srgb, var(--panel-surface) 28%, transparent);
+}
+
+.shortcut-section-title {
+  display: flex;
+  align-items: center;
+  gap: 0.55rem;
+  min-width: 0;
 }
 
 .shortcut-section-head h2 {
@@ -1042,7 +1062,7 @@ a {
   line-height: 1.1;
 }
 
-.shortcut-section-head span {
+.shortcut-section-count {
   display: inline-grid;
   min-width: 28px;
   height: 28px;
@@ -1053,6 +1073,27 @@ a {
   color: var(--panel-muted);
   font-size: 0.72rem;
   font-weight: 900;
+}
+
+.shortcut-section-chevron {
+  flex: 0 0 auto;
+  color: var(--panel-muted);
+  transition:
+    transform 180ms ease,
+    color 180ms ease;
+}
+
+.shortcut-section-head:hover .shortcut-section-chevron,
+.shortcut-section-head:focus-visible .shortcut-section-chevron {
+  color: var(--panel-text);
+}
+
+.shortcut-section-head[aria-expanded='true'] .shortcut-section-chevron {
+  transform: rotate(180deg);
+}
+
+.shortcut-section[data-collapsed='true'] {
+  gap: 0;
 }
 
 .shortcut-empty {
@@ -1215,6 +1256,7 @@ a {
 }
 
 .shortcut-card:focus-visible,
+.shortcut-section-head:focus-visible,
 .icon-button:focus-visible,
 .primary-button:focus-visible,
 .secondary-button:focus-visible,

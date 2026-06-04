@@ -35,6 +35,7 @@ export const BarChart3 = makeIcon(['M4 19V9', 'M12 19V5', 'M20 19v-7']);
 export const BookOpenText = makeIcon(['M4 5.5A2.5 2.5 0 0 1 6.5 3H20v16H6.5A2.5 2.5 0 0 0 4 21z', 'M8 7h8', 'M8 11h7']);
 export const BriefcaseBusiness = makeIcon(['M10 6V5a2 2 0 0 1 2-2h0a2 2 0 0 1 2 2v1', 'M4 7h16v12H4z', 'M9 12h6']);
 export const CalendarDays = makeIcon(['M8 2v4', 'M16 2v4', 'M3 10h18', 'M5 5h14a2 2 0 0 1 2 2v12H3V7a2 2 0 0 1 2-2z']);
+export const ChevronDown = makeIcon(['m6 9 6 6 6-6']);
 export const Cloud = makeIcon(['M17.5 18H8a4 4 0 1 1 .8-7.9A6 6 0 0 1 20 12.5 3.5 3.5 0 0 1 17.5 18z']);
 export const CloudDrizzle = makeIcon(['M17.5 15.5H8a4 4 0 1 1 .8-7.9A6 6 0 0 1 20 10a3.5 3.5 0 0 1-2.5 5.5z', 'M8 19v1', 'M12 18v1', 'M16 19v1']);
 export const CloudFog = makeIcon(['M17.5 14.5H8a4 4 0 1 1 .8-7.9A6 6 0 0 1 20 9a3.5 3.5 0 0 1-2.5 5.5z', 'M5 18h14', 'M7 21h10']);
