@@ -6,7 +6,8 @@ const JAKARTA = {
   label: 'Jakarta, Indonesia',
 };
 
-const WEATHER_FETCH_TIMEOUT_MS = 6000;
+const WEATHER_FETCH_TIMEOUT_MS = 9000;
+export const WEATHER_UNAVAILABLE_MESSAGE = 'Cuaca belum tersedia. Coba refresh sebentar lagi.';
 
 const MOTIVATIONAL_QUOTES = [
   'Kualitas bukan kebetulan, tetapi hasil dari proses yang konsisten.',
@@ -149,6 +150,20 @@ function fetchWithTimeout(url: string, timeoutMs: number) {
   return fetch(url, { signal: controller.signal }).finally(() => window.clearTimeout(timeout));
 }
 
+export function isWeatherAbortError(error: unknown) {
+  const name = error instanceof DOMException || error instanceof Error ? error.name : '';
+  const message = error instanceof Error ? error.message.toLowerCase() : String(error || '').toLowerCase();
+  return name === 'AbortError' || message.includes('aborted') || message.includes('signal is aborted');
+}
+
+function logWeatherError(label: string, error: unknown) {
+  if (isWeatherAbortError(error)) {
+    console.info(label, error);
+    return;
+  }
+  console.warn(label, error);
+}
+
 function readPosition(): Promise<{ latitude: number; longitude: number; usedFallback: boolean }> {
   return new Promise((resolve) => {
     if (!navigator.geolocation) {
@@ -172,6 +187,22 @@ function readPosition(): Promise<{ latitude: number; longitude: number; usedFall
 
 export async function fetchWeather(): Promise<WeatherData> {
   const { latitude, longitude, usedFallback } = await readPosition();
+  try {
+    return await fetchWeatherForLocation(latitude, longitude, usedFallback);
+  } catch (error) {
+    logWeatherError('Weather request failed. Retrying Jakarta fallback when possible.', error);
+    if (!usedFallback) {
+      try {
+        return await fetchWeatherForLocation(JAKARTA.latitude, JAKARTA.longitude, true);
+      } catch (fallbackError) {
+        logWeatherError('Jakarta fallback weather request failed.', fallbackError);
+      }
+    }
+    throw new Error(WEATHER_UNAVAILABLE_MESSAGE);
+  }
+}
+
+async function fetchWeatherForLocation(latitude: number, longitude: number, usedFallback: boolean): Promise<WeatherData> {
   const params = new URLSearchParams({
     latitude: String(latitude),
     longitude: String(longitude),

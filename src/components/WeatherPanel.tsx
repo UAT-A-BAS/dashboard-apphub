@@ -7,9 +7,11 @@ import {
   getMotivationalGreeting,
   getThemeFromTime,
   getThemeFromWeather,
+  isWeatherAbortError,
   WeatherData,
   WEATHER_MODE_LABELS,
   WEATHER_MODE_OPTIONS,
+  WEATHER_UNAVAILABLE_MESSAGE,
   WeatherMode,
 } from '../lib/weather';
 
@@ -56,8 +58,13 @@ export default function WeatherPanel({ compact = false, enableParallax = true, o
       setWeather(nextWeather);
       writeCachedWeather(nextWeather);
     } catch (weatherError) {
+      if (isWeatherAbortError(weatherError)) {
+        console.info('Weather request aborted.', weatherError);
+      } else {
+        console.warn('Weather request failed.', weatherError);
+      }
       if (!weather) {
-        setError(weatherError instanceof Error ? weatherError.message : 'Weather gagal dimuat.');
+        setError(WEATHER_UNAVAILABLE_MESSAGE);
       }
     } finally {
       if (!background) setLoading(false);
