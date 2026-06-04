@@ -1064,6 +1064,98 @@ a {
   box-shadow: 0 8px 18px rgba(15, 23, 42, 0.18);
 }
 
+.home-page[data-theme='clearNight'] .app-search-shell,
+.home-page[data-theme='cloudy'] .app-search-shell,
+.home-page[data-theme='cloudyNight'] .app-search-shell,
+.home-page[data-theme='lightRain'] .app-search-shell,
+.home-page[data-theme='heavyRain'] .app-search-shell,
+.home-page[data-theme='thunderstorm'] .app-search-shell,
+.home-page[data-theme='clearNight'] .app-sort-control,
+.home-page[data-theme='cloudy'] .app-sort-control,
+.home-page[data-theme='cloudyNight'] .app-sort-control,
+.home-page[data-theme='lightRain'] .app-sort-control,
+.home-page[data-theme='heavyRain'] .app-sort-control,
+.home-page[data-theme='thunderstorm'] .app-sort-control {
+  border-color: rgba(148, 163, 184, 0.42);
+  background: #101827;
+  color: #e2e8f0;
+  box-shadow:
+    0 18px 48px rgba(2, 6, 23, 0.24),
+    inset 0 1px 0 rgba(255, 255, 255, 0.08);
+}
+
+.home-page[data-theme='clearNight'] .app-search-shell:focus-within,
+.home-page[data-theme='cloudy'] .app-search-shell:focus-within,
+.home-page[data-theme='cloudyNight'] .app-search-shell:focus-within,
+.home-page[data-theme='lightRain'] .app-search-shell:focus-within,
+.home-page[data-theme='heavyRain'] .app-search-shell:focus-within,
+.home-page[data-theme='thunderstorm'] .app-search-shell:focus-within {
+  border-color: color-mix(in srgb, var(--weather-accent) 58%, #94a3b8);
+  background: #0b1220;
+}
+
+.home-page[data-theme='clearNight'] .app-search-shell input,
+.home-page[data-theme='cloudy'] .app-search-shell input,
+.home-page[data-theme='cloudyNight'] .app-search-shell input,
+.home-page[data-theme='lightRain'] .app-search-shell input,
+.home-page[data-theme='heavyRain'] .app-search-shell input,
+.home-page[data-theme='thunderstorm'] .app-search-shell input {
+  color: #f8fafc;
+}
+
+.home-page[data-theme='clearNight'] .app-search-shell input::placeholder,
+.home-page[data-theme='cloudy'] .app-search-shell input::placeholder,
+.home-page[data-theme='cloudyNight'] .app-search-shell input::placeholder,
+.home-page[data-theme='lightRain'] .app-search-shell input::placeholder,
+.home-page[data-theme='heavyRain'] .app-search-shell input::placeholder,
+.home-page[data-theme='thunderstorm'] .app-search-shell input::placeholder {
+  color: #cbd5e1;
+}
+
+.home-page[data-theme='clearNight'] .app-sort-control button,
+.home-page[data-theme='cloudy'] .app-sort-control button,
+.home-page[data-theme='cloudyNight'] .app-sort-control button,
+.home-page[data-theme='lightRain'] .app-sort-control button,
+.home-page[data-theme='heavyRain'] .app-sort-control button,
+.home-page[data-theme='thunderstorm'] .app-sort-control button {
+  color: #cbd5e1;
+}
+
+.home-page[data-theme='clearNight'] .app-sort-control button:hover,
+.home-page[data-theme='cloudy'] .app-sort-control button:hover,
+.home-page[data-theme='cloudyNight'] .app-sort-control button:hover,
+.home-page[data-theme='lightRain'] .app-sort-control button:hover,
+.home-page[data-theme='heavyRain'] .app-sort-control button:hover,
+.home-page[data-theme='thunderstorm'] .app-sort-control button:hover {
+  background: rgba(148, 163, 184, 0.18);
+  color: #f8fafc;
+}
+
+.home-page[data-theme='clearNight'] .app-sort-control button.active,
+.home-page[data-theme='cloudy'] .app-sort-control button.active,
+.home-page[data-theme='cloudyNight'] .app-sort-control button.active,
+.home-page[data-theme='lightRain'] .app-sort-control button.active,
+.home-page[data-theme='heavyRain'] .app-sort-control button.active,
+.home-page[data-theme='thunderstorm'] .app-sort-control button.active {
+  background: #f8fafc;
+  color: #0f172a;
+}
+
+.app-footer {
+  color: rgba(15, 23, 42, 0.78);
+  text-shadow: 0 1px 0 rgba(255, 255, 255, 0.28);
+}
+
+.home-page[data-theme='clearNight'] .app-footer,
+.home-page[data-theme='cloudy'] .app-footer,
+.home-page[data-theme='cloudyNight'] .app-footer,
+.home-page[data-theme='lightRain'] .app-footer,
+.home-page[data-theme='heavyRain'] .app-footer,
+.home-page[data-theme='thunderstorm'] .app-footer {
+  color: rgba(248, 250, 252, 0.82);
+  text-shadow: 0 1px 14px rgba(2, 6, 23, 0.34);
+}
+
 .shortcut-sections {
   display: grid;
   gap: clamp(1rem, 1.8vw, 1.55rem);

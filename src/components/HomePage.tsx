@@ -100,7 +100,7 @@ export default function HomePage() {
             </div>
           </section>
           <ShortcutGrid shortcuts={shortcuts} categories={categories} query={searchQuery} sortMode={sortMode} />
-          <footer className="pb-2 text-center text-sm font-semibold text-white/70">
+          <footer className="app-footer pb-2 text-center text-sm font-semibold">
             Developed by Alex Surya Marcelo (UAT-A) <span aria-hidden="true">•</span> AppHub
           </footer>
         </div>
