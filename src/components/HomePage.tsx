@@ -1,7 +1,7 @@
 import { useEffect, useState } from 'react';
 import ShortcutGrid from './ShortcutGrid';
 import WeatherPanel, { GreetingBlock } from './WeatherPanel';
-import { Search } from '../lib/icons';
+import { Search, X } from '../lib/icons';
 import {
   fetchGlobalShortcutConfig,
   readShortcutConfig,
@@ -80,6 +80,11 @@ export default function HomePage() {
                 placeholder="Search apps"
                 aria-label="Search apps by name"
               />
+              {searchQuery ? (
+                <button className="app-search-clear" type="button" onClick={() => setSearchQuery('')} aria-label="Clear search">
+                  <X size={16} strokeWidth={2.6} />
+                </button>
+              ) : null}
             </div>
             <div className="app-sort-control" aria-label="Urutkan aplikasi">
               {[

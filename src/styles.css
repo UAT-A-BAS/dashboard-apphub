@@ -1022,13 +1022,32 @@ a {
 }
 
 .app-search-shell input::-webkit-search-cancel-button {
-  cursor: pointer;
-  opacity: 0.72;
-  filter: invert(18%) sepia(14%) saturate(1077%) hue-rotate(176deg) brightness(92%) contrast(88%);
+  display: none;
+  appearance: none;
 }
 
-.app-search-shell input::-webkit-search-cancel-button:hover {
-  opacity: 1;
+.app-search-clear {
+  display: grid;
+  flex: 0 0 auto;
+  width: 30px;
+  height: 30px;
+  place-items: center;
+  border: 0;
+  border-radius: 999px;
+  background: rgba(15, 23, 42, 0.08);
+  color: #0f172a;
+  cursor: pointer;
+  transition:
+    background-color 160ms ease,
+    color 160ms ease,
+    transform 160ms ease;
+}
+
+.app-search-clear:hover,
+.app-search-clear:focus-visible {
+  background: rgba(15, 23, 42, 0.14);
+  color: #000000;
+  transform: scale(1.04);
 }
 
 .app-sort-control {
@@ -1122,13 +1141,30 @@ a {
   color: #cbd5e1;
 }
 
-.home-page[data-theme='clearNight'] .app-search-shell input::-webkit-search-cancel-button,
-.home-page[data-theme='cloudy'] .app-search-shell input::-webkit-search-cancel-button,
-.home-page[data-theme='cloudyNight'] .app-search-shell input::-webkit-search-cancel-button,
-.home-page[data-theme='lightRain'] .app-search-shell input::-webkit-search-cancel-button,
-.home-page[data-theme='heavyRain'] .app-search-shell input::-webkit-search-cancel-button,
-.home-page[data-theme='thunderstorm'] .app-search-shell input::-webkit-search-cancel-button {
-  filter: invert(100%) sepia(7%) saturate(131%) hue-rotate(175deg) brightness(101%) contrast(96%);
+.home-page[data-theme='clearNight'] .app-search-clear,
+.home-page[data-theme='cloudy'] .app-search-clear,
+.home-page[data-theme='cloudyNight'] .app-search-clear,
+.home-page[data-theme='lightRain'] .app-search-clear,
+.home-page[data-theme='heavyRain'] .app-search-clear,
+.home-page[data-theme='thunderstorm'] .app-search-clear {
+  background: rgba(248, 250, 252, 0.12);
+  color: #ffffff;
+}
+
+.home-page[data-theme='clearNight'] .app-search-clear:hover,
+.home-page[data-theme='cloudy'] .app-search-clear:hover,
+.home-page[data-theme='cloudyNight'] .app-search-clear:hover,
+.home-page[data-theme='lightRain'] .app-search-clear:hover,
+.home-page[data-theme='heavyRain'] .app-search-clear:hover,
+.home-page[data-theme='thunderstorm'] .app-search-clear:hover,
+.home-page[data-theme='clearNight'] .app-search-clear:focus-visible,
+.home-page[data-theme='cloudy'] .app-search-clear:focus-visible,
+.home-page[data-theme='cloudyNight'] .app-search-clear:focus-visible,
+.home-page[data-theme='lightRain'] .app-search-clear:focus-visible,
+.home-page[data-theme='heavyRain'] .app-search-clear:focus-visible,
+.home-page[data-theme='thunderstorm'] .app-search-clear:focus-visible {
+  background: rgba(248, 250, 252, 0.2);
+  color: #ffffff;
 }
 
 .home-page[data-theme='clearNight'] .app-sort-control button,
@@ -1424,6 +1460,7 @@ a {
 .shortcut-card:focus-visible,
 .shortcut-section-head:focus-visible,
 .app-sort-control button:focus-visible,
+.app-search-clear:focus-visible,
 .icon-button:focus-visible,
 .primary-button:focus-visible,
 .secondary-button:focus-visible,

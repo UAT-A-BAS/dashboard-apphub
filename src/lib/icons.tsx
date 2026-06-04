@@ -66,6 +66,7 @@ export const Trash = makeIcon(['M3 6h18', 'M8 6V4h8v2', 'M6 6l1 15h10l1-15', 'M1
 export const Upload = makeIcon(['M12 21V9', 'm7 14 5-5 5 5', 'M5 3h14']);
 export const Users = makeIcon(['M16 21v-2a4 4 0 0 0-4-4H7a4 4 0 0 0-4 4v2', 'M9.5 11a4 4 0 1 0 0-8 4 4 0 0 0 0 8z', 'M22 21v-2a4 4 0 0 0-3-3.8', 'M16 3.2a4 4 0 0 1 0 7.6']);
 export const Wind = makeIcon(['M3 8h11a3 3 0 1 0-3-3', 'M3 12h16', 'M3 16h10a3 3 0 1 1-3 3']);
+export const X = makeIcon(['M18 6 6 18', 'M6 6l12 12']);
 
 export const shortcutIcons = {
   BarChart3,
