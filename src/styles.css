@@ -1021,6 +1021,16 @@ a {
   color: #64748b;
 }
 
+.app-search-shell input::-webkit-search-cancel-button {
+  cursor: pointer;
+  opacity: 0.72;
+  filter: invert(18%) sepia(14%) saturate(1077%) hue-rotate(176deg) brightness(92%) contrast(88%);
+}
+
+.app-search-shell input::-webkit-search-cancel-button:hover {
+  opacity: 1;
+}
+
 .app-sort-control {
   display: flex;
   min-height: 52px;
@@ -1110,6 +1120,15 @@ a {
 .home-page[data-theme='heavyRain'] .app-search-shell input::placeholder,
 .home-page[data-theme='thunderstorm'] .app-search-shell input::placeholder {
   color: #cbd5e1;
+}
+
+.home-page[data-theme='clearNight'] .app-search-shell input::-webkit-search-cancel-button,
+.home-page[data-theme='cloudy'] .app-search-shell input::-webkit-search-cancel-button,
+.home-page[data-theme='cloudyNight'] .app-search-shell input::-webkit-search-cancel-button,
+.home-page[data-theme='lightRain'] .app-search-shell input::-webkit-search-cancel-button,
+.home-page[data-theme='heavyRain'] .app-search-shell input::-webkit-search-cancel-button,
+.home-page[data-theme='thunderstorm'] .app-search-shell input::-webkit-search-cancel-button {
+  filter: invert(100%) sepia(7%) saturate(131%) hue-rotate(175deg) brightness(101%) contrast(96%);
 }
 
 .home-page[data-theme='clearNight'] .app-sort-control button,
