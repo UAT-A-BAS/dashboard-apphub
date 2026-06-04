@@ -1,7 +1,14 @@
 import { useEffect, useState } from 'react';
 import ShortcutGrid from './ShortcutGrid';
 import WeatherPanel, { GreetingBlock } from './WeatherPanel';
-import { fetchGlobalShortcuts, readShortcuts, saveShortcuts, Shortcut } from '../lib/shortcuts';
+import { Search } from '../lib/icons';
+import {
+  fetchGlobalShortcutConfig,
+  readShortcutConfig,
+  saveShortcutConfig,
+  Shortcut,
+  ShortcutCategory,
+} from '../lib/shortcuts';
 import { getThemeFromTime, WeatherMode } from '../lib/weather';
 
 function getInitialRenderMode(): 'standard' | 'lite' {
@@ -10,12 +17,18 @@ function getInitialRenderMode(): 'standard' | 'lite' {
 }
 
 export default function HomePage() {
-  const [shortcuts, setShortcuts] = useState<Shortcut[]>(() => readShortcuts());
+  const [shortcuts, setShortcuts] = useState<Shortcut[]>(() => readShortcutConfig().shortcuts);
+  const [categories, setCategories] = useState<ShortcutCategory[]>(() => readShortcutConfig().categories);
+  const [searchQuery, setSearchQuery] = useState('');
   const [theme, setTheme] = useState<WeatherMode>(() => getThemeFromTime());
   const [renderMode, setRenderMode] = useState<'standard' | 'lite'>(() => getInitialRenderMode());
 
   useEffect(() => {
-    const sync = () => setShortcuts(readShortcuts());
+    const sync = () => {
+      const config = readShortcutConfig();
+      setShortcuts(config.shortcuts);
+      setCategories(config.categories);
+    };
     window.addEventListener('storage', sync);
     window.addEventListener('shortcuts-updated', sync);
     return () => {
@@ -25,9 +38,11 @@ export default function HomePage() {
   }, []);
 
   useEffect(() => {
-    void fetchGlobalShortcuts().then((globalShortcuts) => {
-      if (!globalShortcuts) return;
-      setShortcuts(saveShortcuts(globalShortcuts));
+    void fetchGlobalShortcutConfig().then((globalConfig) => {
+      if (!globalConfig) return;
+      const clean = saveShortcutConfig(globalConfig);
+      setShortcuts(clean.shortcuts);
+      setCategories(clean.categories);
     });
   }, []);
 
@@ -54,7 +69,17 @@ export default function HomePage() {
             <GreetingBlock />
             <WeatherPanel enableParallax={renderMode === 'standard'} onModeChange={setTheme} />
           </section>
-          <ShortcutGrid shortcuts={shortcuts} />
+          <section className="app-search-shell" aria-label="Cari aplikasi">
+            <Search size={18} strokeWidth={2.2} />
+            <input
+              type="search"
+              value={searchQuery}
+              onChange={(event) => setSearchQuery(event.target.value)}
+              placeholder="Search apps"
+              aria-label="Search apps"
+            />
+          </section>
+          <ShortcutGrid shortcuts={shortcuts} categories={categories} query={searchQuery} />
           <footer className="pb-2 text-center text-sm font-semibold text-white/70">
             Developed by Alex Surya Marcelo (UAT-A) <span aria-hidden="true">•</span> AppHub
           </footer>

@@ -54,6 +54,7 @@ export const NotebookTabs = makeIcon(['M6 4h12v16H6z', 'M3 8h3', 'M3 12h3', 'M3 
 export const Plus = makeIcon(['M12 5v14', 'M5 12h14']);
 export const RefreshCcw = makeIcon(['M21 12a9 9 0 0 1-15 6.7', 'M3 12a9 9 0 0 1 15-6.7', 'M18 3v4h-4', 'M6 21v-4h4']);
 export const Save = makeIcon(['M5 3h12l2 2v16H5z', 'M8 3v6h8V3', 'M8 21v-7h8v7']);
+export const Search = makeIcon(['M11 19a8 8 0 1 1 0-16 8 8 0 0 1 0 16z', 'm21 21-4.3-4.3']);
 export const Settings = makeIcon(['M12 8a4 4 0 1 0 0 8 4 4 0 0 0 0-8z', 'M12 2v3', 'M12 19v3', 'M4.9 4.9 7 7', 'M17.1 17.1l2 2', 'M2 12h3', 'M19 12h3']);
 export const Shield = makeIcon(['M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z']);
 export const ShieldCheck = makeIcon(['M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z', 'm9 12 2 2 4-5']);

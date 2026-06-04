@@ -1,7 +1,17 @@
 import { ChangeEvent, FormEvent, useEffect, useMemo, useState } from 'react';
 import { getAdminSession, loginAdmin, logoutAdmin } from '../lib/adminApi';
 import { ArrowDown, ArrowUp, Download, LogOut, Plus, Save, ShieldCheck, shortcutIconNames, Trash, Upload } from '../lib/icons';
-import { createShortcutDraft, fetchGlobalShortcuts, MAX_SHORTCUTS, readShortcuts, saveGlobalShortcuts, saveShortcuts, Shortcut } from '../lib/shortcuts';
+import {
+  createCategoryDraft,
+  createShortcutDraft,
+  fetchGlobalShortcutConfig,
+  MAX_SHORTCUTS,
+  readShortcutConfig,
+  saveGlobalShortcutConfig,
+  saveShortcutConfig,
+  Shortcut,
+  ShortcutCategory,
+} from '../lib/shortcuts';
 import ShortcutGlyph from './ShortcutGlyph';
 
 type Notice = {
@@ -14,7 +24,8 @@ export default function AdminPage() {
   const [authenticated, setAuthenticated] = useState(false);
   const [pin, setPin] = useState('');
   const [notice, setNotice] = useState<Notice | null>(null);
-  const [shortcuts, setShortcuts] = useState<Shortcut[]>(() => readShortcuts());
+  const [shortcuts, setShortcuts] = useState<Shortcut[]>(() => readShortcutConfig().shortcuts);
+  const [categories, setCategories] = useState<ShortcutCategory[]>(() => readShortcutConfig().categories);
 
   useEffect(() => {
     void getAdminSession()
@@ -24,8 +35,10 @@ export default function AdminPage() {
 
   useEffect(() => {
     if (!authenticated) return;
-    void fetchGlobalShortcuts().then((globalShortcuts) => {
-      if (globalShortcuts) setShortcuts(globalShortcuts);
+    void fetchGlobalShortcutConfig().then((globalConfig) => {
+      if (!globalConfig) return;
+      setShortcuts(globalConfig.shortcuts);
+      setCategories(globalConfig.categories);
     });
   }, [authenticated]);
 
@@ -68,7 +81,9 @@ export default function AdminPage() {
   }
 
   function addShortcut() {
-    setShortcuts((items) => (items.length >= MAX_SHORTCUTS ? items : [...items, createShortcutDraft(items.length)]));
+    setShortcuts((items) =>
+      items.length >= MAX_SHORTCUTS ? items : [...items, { ...createShortcutDraft(items.length), categoryId: categories[0]?.id }],
+    );
     setNotice({ tone: 'info', message: 'Aplikasi baru ditambahkan. Lengkapi nama dan URL, lalu simpan.' });
   }
 
@@ -120,14 +135,42 @@ export default function AdminPage() {
     updateShortcut(id, { customIconDataUrl: undefined });
   }
 
+  function addCategory() {
+    setCategories((items) => [...items, createCategoryDraft(items.length)]);
+    setNotice({ tone: 'info', message: 'Kategori baru ditambahkan. Rename lalu simpan.' });
+  }
+
+  function updateCategory(id: string, patch: Partial<ShortcutCategory>) {
+    setCategories((items) => items.map((item) => (item.id === id ? { ...item, ...patch } : item)));
+  }
+
+  function moveCategory(index: number, direction: -1 | 1) {
+    setCategories((items) => {
+      const next = [...items];
+      const target = index + direction;
+      if (target < 0 || target >= next.length) return items;
+      [next[index], next[target]] = [next[target], next[index]];
+      return next;
+    });
+  }
+
+  function removeCategory(id: string) {
+    if (categories.length <= 1) return;
+    const fallbackId = categories.find((category) => category.id !== id)?.id || categories[0].id;
+    setCategories((items) => items.filter((item) => item.id !== id));
+    setShortcuts((items) => items.map((item) => (item.categoryId === id ? { ...item, categoryId: fallbackId } : item)));
+  }
+
   async function handleSave() {
     try {
-      const clean = await saveGlobalShortcuts(shortcuts);
-      setShortcuts(clean);
+      const clean = await saveGlobalShortcutConfig({ shortcuts, categories });
+      setShortcuts(clean.shortcuts);
+      setCategories(clean.categories);
       setNotice({ tone: 'success', message: 'Shortcut global disimpan. Perubahan berlaku untuk semua pengguna.' });
     } catch (error) {
-      const clean = saveShortcuts(shortcuts);
-      setShortcuts(clean);
+      const clean = saveShortcutConfig({ shortcuts, categories });
+      setShortcuts(clean.shortcuts);
+      setCategories(clean.categories);
       setNotice({
         tone: 'error',
         message: `${error instanceof Error ? error.message : 'Gagal menyimpan shortcut global.'} Perubahan hanya tersimpan lokal di browser ini.`,
@@ -136,7 +179,7 @@ export default function AdminPage() {
   }
 
   function exportJson() {
-    const blob = new Blob([JSON.stringify({ shortcuts }, null, 2)], { type: 'application/json' });
+    const blob = new Blob([JSON.stringify({ shortcuts, categories }, null, 2)], { type: 'application/json' });
     const link = document.createElement('a');
     link.href = URL.createObjectURL(blob);
     link.download = 'apphub-shortcuts.json';
@@ -154,8 +197,9 @@ export default function AdminPage() {
         const parsed = JSON.parse(String(reader.result));
         const list = Array.isArray(parsed) ? parsed : parsed.shortcuts;
         if (!Array.isArray(list)) throw new Error('Format JSON harus array atau { shortcuts: [] }.');
-        const clean = saveShortcuts(list.slice(0, MAX_SHORTCUTS));
-        setShortcuts(clean);
+        const clean = saveShortcutConfig({ shortcuts: list.slice(0, MAX_SHORTCUTS), categories: parsed.categories });
+        setShortcuts(clean.shortcuts);
+        setCategories(clean.categories);
         setNotice({ tone: 'success', message: `JSON diimpor. Maksimal ${MAX_SHORTCUTS} shortcut aktif.` });
       } catch (error) {
         setNotice({ tone: 'error', message: error instanceof Error ? error.message : 'JSON tidak valid.' });
@@ -221,7 +265,7 @@ export default function AdminPage() {
           <div>
             <p className="text-sm font-semibold uppercase tracking-[0.12em] text-slate-500">Private Owner Area</p>
             <h1 className="mt-2 text-4xl font-semibold tracking-normal text-slate-950">Edit Shortcuts</h1>
-          <p className="mt-2 max-w-2xl text-sm leading-6 text-slate-600">
+            <p className="mt-2 max-w-2xl text-sm leading-6 text-slate-600">
               Perubahan urutan dan aplikasi disimpan sebagai konfigurasi global. Export JSON tetap tersedia untuk backup.
             </p>
           </div>
@@ -232,6 +276,50 @@ export default function AdminPage() {
         </header>
 
         {notice ? <NoticeBanner notice={notice} /> : null}
+
+        <section className="category-admin-panel">
+          <div className="category-admin-head">
+            <div>
+              <p className="text-sm font-semibold uppercase tracking-[0.12em] text-slate-500">Kategori</p>
+              <h2>Kelompok aplikasi</h2>
+            </div>
+            <button className="secondary-button" type="button" onClick={addCategory}>
+              <Plus size={18} />
+              Tambah Kategori
+            </button>
+          </div>
+          <div className="category-editor-grid">
+            {categories.map((category, index) => (
+              <div className="category-editor-item" key={category.id}>
+                <span>Nama Kategori</span>
+                <input className="field" value={category.name} onChange={(event) => updateCategory(category.id, { name: event.target.value })} />
+                <div className="category-editor-actions">
+                  <button className="icon-button" type="button" onClick={() => moveCategory(index, -1)} disabled={index === 0} aria-label="Naikkan kategori">
+                    <ArrowUp size={18} />
+                  </button>
+                  <button
+                    className="icon-button"
+                    type="button"
+                    onClick={() => moveCategory(index, 1)}
+                    disabled={index === categories.length - 1}
+                    aria-label="Turunkan kategori"
+                  >
+                    <ArrowDown size={18} />
+                  </button>
+                  <button
+                    className="icon-button danger-button"
+                    type="button"
+                    onClick={() => removeCategory(category.id)}
+                    disabled={categories.length <= 1}
+                    aria-label={`Hapus kategori ${category.name}`}
+                  >
+                    <Trash size={18} />
+                  </button>
+                </div>
+              </div>
+            ))}
+          </div>
+        </section>
 
         <section className="mt-8 grid gap-5">
           {shortcuts.map((shortcut, index) => {
@@ -255,6 +343,20 @@ export default function AdminPage() {
                   <label>
                     <span>URL</span>
                     <input className="field" value={shortcut.url} onChange={(event) => updateShortcut(shortcut.id, { url: event.target.value })} />
+                  </label>
+                  <label>
+                    <span>Kategori</span>
+                    <select
+                      className="field"
+                      value={shortcut.categoryId || categories[0]?.id}
+                      onChange={(event) => updateShortcut(shortcut.id, { categoryId: event.target.value })}
+                    >
+                      {categories.map((category) => (
+                        <option key={category.id} value={category.id}>
+                          {category.name}
+                        </option>
+                      ))}
+                    </select>
                   </label>
                   <label>
                     <span>Sumber Icon</span>

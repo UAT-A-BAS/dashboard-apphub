@@ -38,6 +38,13 @@ function validateShortcuts(shortcuts) {
   return invalid ? 'Setiap aplikasi wajib punya nama dan URL.' : '';
 }
 
+function validateCategories(categories) {
+  if (!Array.isArray(categories)) return 'Payload categories harus berupa array.';
+  if (categories.length < 1 || categories.length > 30) return 'Jumlah kategori harus 1-30.';
+  const invalid = categories.find((item) => !item || typeof item !== 'object' || typeof item.id !== 'string' || typeof item.name !== 'string' || !item.name.trim());
+  return invalid ? 'Setiap kategori wajib punya id dan nama.' : '';
+}
+
 export async function onRequestGet({ request, env }) {
   const authError = await requireAdmin(request, env);
   if (authError) return authError;
@@ -48,7 +55,11 @@ export async function onRequestGet({ request, env }) {
   const raw = await env.APPHUB_CONFIG.get(SHORTCUTS_KEY);
   if (!raw) return noStore({ shortcuts: null });
   const payload = JSON.parse(raw);
-  return noStore({ shortcuts: Array.isArray(payload.shortcuts) ? payload.shortcuts : null, updatedAt: payload.updatedAt || null });
+  return noStore({
+    shortcuts: Array.isArray(payload.shortcuts) ? payload.shortcuts : null,
+    categories: Array.isArray(payload.categories) ? payload.categories : null,
+    updatedAt: payload.updatedAt || null,
+  });
 }
 
 export async function onRequestPut({ request, env }) {
@@ -66,9 +77,12 @@ export async function onRequestPut({ request, env }) {
   const body = JSON.parse(text || '{}');
   const message = validateShortcuts(body.shortcuts);
   if (message) return noStore({ message }, { status: 400 });
+  const categoryMessage = validateCategories(body.categories);
+  if (categoryMessage) return noStore({ message: categoryMessage }, { status: 400 });
 
   const payload = {
     shortcuts: body.shortcuts,
+    categories: body.categories,
     updatedAt: new Date().toISOString(),
   };
   await env.APPHUB_CONFIG.put(SHORTCUTS_KEY, JSON.stringify(payload));

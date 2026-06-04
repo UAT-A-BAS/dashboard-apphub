@@ -24,6 +24,7 @@ export async function onRequestGet({ env }) {
     const payload = JSON.parse(raw);
     return noStore({
       shortcuts: Array.isArray(payload.shortcuts) ? payload.shortcuts : null,
+      categories: Array.isArray(payload.categories) ? payload.categories : null,
       updatedAt: payload.updatedAt || null,
       configured: true,
     });
