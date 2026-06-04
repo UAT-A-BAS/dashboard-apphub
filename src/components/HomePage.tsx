@@ -20,6 +20,7 @@ export default function HomePage() {
   const [shortcuts, setShortcuts] = useState<Shortcut[]>(() => readShortcutConfig().shortcuts);
   const [categories, setCategories] = useState<ShortcutCategory[]>(() => readShortcutConfig().categories);
   const [searchQuery, setSearchQuery] = useState('');
+  const [sortMode, setSortMode] = useState<'default' | 'az' | 'za'>('default');
   const [theme, setTheme] = useState<WeatherMode>(() => getThemeFromTime());
   const [renderMode, setRenderMode] = useState<'standard' | 'lite'>(() => getInitialRenderMode());
 
@@ -69,17 +70,36 @@ export default function HomePage() {
             <GreetingBlock />
             <WeatherPanel enableParallax={renderMode === 'standard'} onModeChange={setTheme} />
           </section>
-          <section className="app-search-shell" aria-label="Cari aplikasi">
-            <Search size={18} strokeWidth={2.2} />
-            <input
-              type="search"
-              value={searchQuery}
-              onChange={(event) => setSearchQuery(event.target.value)}
-              placeholder="Search apps"
-              aria-label="Search apps"
-            />
+          <section className="app-toolbar" aria-label="Cari dan urutkan aplikasi">
+            <div className="app-search-shell">
+              <Search size={18} strokeWidth={2.2} />
+              <input
+                type="search"
+                value={searchQuery}
+                onChange={(event) => setSearchQuery(event.target.value)}
+                placeholder="Search apps"
+                aria-label="Search apps by name"
+              />
+            </div>
+            <div className="app-sort-control" aria-label="Urutkan aplikasi">
+              {[
+                { value: 'default', label: 'Default' },
+                { value: 'az', label: 'A-Z' },
+                { value: 'za', label: 'Z-A' },
+              ].map((option) => (
+                <button
+                  key={option.value}
+                  type="button"
+                  className={sortMode === option.value ? 'active' : ''}
+                  onClick={() => setSortMode(option.value as 'default' | 'az' | 'za')}
+                  aria-pressed={sortMode === option.value}
+                >
+                  {option.label}
+                </button>
+              ))}
+            </div>
           </section>
-          <ShortcutGrid shortcuts={shortcuts} categories={categories} query={searchQuery} />
+          <ShortcutGrid shortcuts={shortcuts} categories={categories} query={searchQuery} sortMode={sortMode} />
           <footer className="pb-2 text-center text-sm font-semibold text-white/70">
             Developed by Alex Surya Marcelo (UAT-A) <span aria-hidden="true">•</span> AppHub
           </footer>

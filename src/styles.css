@@ -965,22 +965,29 @@ a {
   display: none;
 }
 
+.app-toolbar {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+  align-items: center;
+  gap: 0.75rem;
+  width: min(980px, 100%);
+  margin-inline: auto;
+}
+
 .app-search-shell {
   display: flex;
   align-items: center;
   gap: 0.7rem;
-  width: min(720px, 100%);
+  width: 100%;
   min-height: 52px;
-  margin-inline: auto;
-  border: 1px solid color-mix(in srgb, var(--panel-border) 74%, rgba(255, 255, 255, 0.22));
+  border: 1px solid rgba(203, 213, 225, 0.95);
   border-radius: 999px;
-  background: color-mix(in srgb, var(--panel-surface) 82%, rgba(255, 255, 255, 0.28));
+  background: #f8fafc;
   padding: 0 1.1rem;
-  color: var(--panel-muted);
+  color: #475569;
   box-shadow:
     0 16px 42px rgba(15, 23, 42, 0.12),
-    inset 0 1px 0 rgba(255, 255, 255, 0.44);
-  backdrop-filter: blur(14px);
+    inset 0 1px 0 rgba(255, 255, 255, 0.86);
   transition:
     border-color 180ms ease,
     background-color 180ms ease,
@@ -990,8 +997,8 @@ a {
 
 .app-search-shell:focus-within {
   transform: translateY(-1px);
-  border-color: color-mix(in srgb, var(--weather-accent) 42%, var(--panel-border));
-  background: color-mix(in srgb, var(--panel-surface) 92%, rgba(255, 255, 255, 0.34));
+  border-color: color-mix(in srgb, var(--weather-accent) 46%, #94a3b8);
+  background: #ffffff;
   box-shadow:
     0 20px 54px rgba(15, 23, 42, 0.16),
     0 0 0 4px color-mix(in srgb, var(--weather-accent) 18%, transparent),
@@ -1004,14 +1011,57 @@ a {
   border: 0;
   outline: 0;
   background: transparent;
-  color: var(--panel-text);
+  color: #0f172a;
   font-size: 1rem;
   font-weight: 800;
   line-height: 1;
 }
 
 .app-search-shell input::placeholder {
-  color: color-mix(in srgb, var(--panel-muted) 72%, transparent);
+  color: #64748b;
+}
+
+.app-sort-control {
+  display: flex;
+  min-height: 52px;
+  align-items: center;
+  gap: 0.24rem;
+  border: 1px solid rgba(203, 213, 225, 0.95);
+  border-radius: 999px;
+  background: #f8fafc;
+  padding: 0.3rem;
+  box-shadow:
+    0 16px 42px rgba(15, 23, 42, 0.12),
+    inset 0 1px 0 rgba(255, 255, 255, 0.86);
+}
+
+.app-sort-control button {
+  min-width: 78px;
+  height: 40px;
+  border: 0;
+  border-radius: 999px;
+  background: transparent;
+  color: #475569;
+  cursor: pointer;
+  font-size: 0.78rem;
+  font-weight: 900;
+  transition:
+    background-color 180ms ease,
+    color 180ms ease,
+    box-shadow 180ms ease,
+    transform 180ms ease;
+}
+
+.app-sort-control button:hover {
+  transform: translateY(-1px);
+  background: #e2e8f0;
+  color: #0f172a;
+}
+
+.app-sort-control button.active {
+  background: #0f172a;
+  color: #ffffff;
+  box-shadow: 0 8px 18px rgba(15, 23, 42, 0.18);
 }
 
 .shortcut-sections {
@@ -1262,6 +1312,7 @@ a {
 
 .shortcut-card:focus-visible,
 .shortcut-section-head:focus-visible,
+.app-sort-control button:focus-visible,
 .icon-button:focus-visible,
 .primary-button:focus-visible,
 .secondary-button:focus-visible,
@@ -1832,6 +1883,20 @@ a {
   .app-search-shell {
     min-height: 48px;
     padding-inline: 0.92rem;
+  }
+
+  .app-toolbar {
+    grid-template-columns: 1fr;
+    gap: 0.65rem;
+  }
+
+  .app-sort-control {
+    width: 100%;
+  }
+
+  .app-sort-control button {
+    flex: 1;
+    min-width: 0;
   }
 
   .shortcut-sections {

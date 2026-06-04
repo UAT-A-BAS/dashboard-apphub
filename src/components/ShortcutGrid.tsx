@@ -9,6 +9,7 @@ type ShortcutGridProps = {
   shortcuts: Shortcut[];
   categories: ShortcutCategory[];
   query: string;
+  sortMode: 'default' | 'az' | 'za';
 };
 
 function readCollapsedCategories() {
@@ -20,7 +21,7 @@ function readCollapsedCategories() {
   }
 }
 
-export default function ShortcutGrid({ shortcuts, categories, query }: ShortcutGridProps) {
+export default function ShortcutGrid({ shortcuts, categories, query, sortMode }: ShortcutGridProps) {
   const [collapsedCategoryIds, setCollapsedCategoryIds] = useState<string[]>(() => readCollapsedCategories());
   const normalizedQuery = query.trim().toLowerCase();
   const uncategorized = { id: 'uncategorized', name: 'Lainnya' };
@@ -28,18 +29,22 @@ export default function ShortcutGrid({ shortcuts, categories, query }: ShortcutG
     () =>
       [...categories, uncategorized]
         .map((category) => {
-          const categoryMatches = normalizedQuery ? category.name.toLowerCase().includes(normalizedQuery) : false;
           const categoryShortcuts = shortcuts.filter((shortcut) => (shortcut.categoryId || uncategorized.id) === category.id);
+          const filteredShortcuts = normalizedQuery
+            ? categoryShortcuts.filter((shortcut) => shortcut.name.toLowerCase().includes(normalizedQuery))
+            : categoryShortcuts;
           return {
             ...category,
             shortcuts:
-              normalizedQuery && !categoryMatches
-                ? categoryShortcuts.filter((shortcut) => `${shortcut.name} ${shortcut.url}`.toLowerCase().includes(normalizedQuery))
-                : categoryShortcuts,
+              sortMode === 'default'
+                ? filteredShortcuts
+                : [...filteredShortcuts].sort((a, b) =>
+                    sortMode === 'az' ? a.name.localeCompare(b.name) : b.name.localeCompare(a.name),
+                  ),
           };
         })
         .filter((category) => category.shortcuts.length > 0),
-    [categories, normalizedQuery, shortcuts],
+    [categories, normalizedQuery, shortcuts, sortMode],
   );
 
   useEffect(() => {
