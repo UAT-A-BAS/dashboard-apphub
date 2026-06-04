@@ -1035,7 +1035,7 @@ a {
   border: 0;
   border-radius: 18px;
   background: transparent;
-  padding-inline: 0.18rem;
+  padding: 0.28rem 0.18rem;
   color: var(--panel-text);
   cursor: pointer;
   text-align: left;
@@ -1094,6 +1094,11 @@ a {
 
 .shortcut-section[data-collapsed='true'] {
   gap: 0;
+}
+
+.shortcut-section[data-collapsed='true'] .shortcut-grid,
+.shortcut-grid[hidden] {
+  display: none;
 }
 
 .shortcut-empty {
