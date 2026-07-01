@@ -145,7 +145,7 @@ function describeWttrWeather(code: number, fallbackLabel = 'Cuaca tersedia'): { 
 
 function getClearMode(date: Date, isDay: boolean): WeatherMode {
   const hour = date.getHours();
-  if (!isDay || hour < 5 || hour >= 19) return 'clearNight';
+  if (!isDay || hour < 6 || hour >= 18) return 'clearNight';
   if (hour < 11) return 'clearMorning';
   if (hour < 16) return 'clearAfternoon';
   return 'clearEvening';
@@ -155,8 +155,8 @@ export function getThemeFromWeather(code: number, isDay: boolean, date = new Dat
   if ([95, 96, 99].includes(code)) return 'thunderstorm';
   if ([63, 65, 66, 67, 81, 82].includes(code)) return 'heavyRain';
   if ([51, 53, 55, 56, 57, 61, 80].includes(code)) return 'lightRain';
-  if ([3, 45, 48].includes(code)) return isDay && date.getHours() < 19 ? 'cloudy' : 'cloudyNight';
-  if ([1, 2].includes(code)) return 'partlyCloudy';
+  if ([3, 45, 48].includes(code)) return isDay && date.getHours() < 18 ? 'cloudy' : 'cloudyNight';
+  if ([1, 2].includes(code)) return isDay && date.getHours() < 18 ? 'partlyCloudy' : 'cloudyNight';
   return getClearMode(date, isDay);
 }
 
@@ -164,8 +164,8 @@ function getThemeFromWttrWeather(code: number, isDay: boolean, date = new Date()
   if ([386, 389, 392, 395].includes(code)) return 'thunderstorm';
   if ([302, 305, 308, 314, 317, 350, 356, 359, 362, 365].includes(code)) return 'heavyRain';
   if ([176, 185, 263, 266, 281, 284, 293, 296, 299, 311, 353].includes(code)) return 'lightRain';
-  if ([119, 122, 143, 248, 260].includes(code)) return isDay && date.getHours() < 19 ? 'cloudy' : 'cloudyNight';
-  if (code === 116) return 'partlyCloudy';
+  if ([119, 122, 143, 248, 260].includes(code)) return isDay && date.getHours() < 18 ? 'cloudy' : 'cloudyNight';
+  if (code === 116) return isDay && date.getHours() < 18 ? 'partlyCloudy' : 'cloudyNight';
   return getClearMode(date, isDay);
 }
 
@@ -388,7 +388,12 @@ async function fetchWttrWeatherForLocation(latitude: number, longitude: number, 
 
 export function getThemeFromTime(date = new Date()): WeatherMode {
   const hour = date.getHours();
-  return getClearMode(date, hour >= 5 && hour < 19);
+  return getClearMode(date, hour >= 6 && hour < 18);
+}
+
+export function getThemeFromCurrentTime(code: number, date = new Date()): WeatherMode {
+  const hour = date.getHours();
+  return getThemeFromWeather(code, hour >= 6 && hour < 18, date);
 }
 
 export function getGreeting(date = new Date()) {

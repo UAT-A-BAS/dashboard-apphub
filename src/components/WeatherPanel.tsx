@@ -5,6 +5,7 @@ import {
   formatHour,
   getGreeting,
   getMotivationalGreeting,
+  getThemeFromCurrentTime,
   getThemeFromTime,
   getThemeFromWeather,
   isWeatherAbortError,
@@ -50,6 +51,12 @@ export default function WeatherPanel({ compact = false, enableParallax = true, o
   const [error, setError] = useState('');
   const [loading, setLoading] = useState(() => !readCachedWeather());
   const [previewMode, setPreviewMode] = useState<WeatherMode | 'auto'>('auto');
+  const [themeClock, setThemeClock] = useState(() => new Date());
+
+  useEffect(() => {
+    const timer = window.setInterval(() => setThemeClock(new Date()), 30_000);
+    return () => window.clearInterval(timer);
+  }, []);
 
   async function loadWeather(background = false) {
     if (!background) setLoading(true);
@@ -88,7 +95,12 @@ export default function WeatherPanel({ compact = false, enableParallax = true, o
     return () => window.cancelIdleCallback?.(idle);
   }, []);
 
-  const activeMode = previewMode === 'auto' ? weather?.theme ?? getThemeFromTime() : previewMode;
+  const activeMode =
+    previewMode === 'auto'
+      ? weather
+        ? getThemeFromCurrentTime(weather.weatherCode, themeClock)
+        : getThemeFromTime(themeClock)
+      : previewMode;
 
   useEffect(() => {
     onModeChange?.(activeMode);
