@@ -13,6 +13,7 @@ import {
   ShortcutCategory,
 } from '../lib/shortcuts';
 import ShortcutGlyph from './ShortcutGlyph';
+import { compressIcon } from '../lib/imageCompression';
 
 type Notice = {
   tone: 'success' | 'error' | 'info';
@@ -105,30 +106,27 @@ export default function AdminPage() {
     );
   }
 
-  function uploadCustomIcon(id: string, event: ChangeEvent<HTMLInputElement>) {
+  async function uploadCustomIcon(id: string, event: ChangeEvent<HTMLInputElement>) {
     const file = event.target.files?.[0];
     if (!file) return;
-    if (!file.type.startsWith('image/')) {
-      setNotice({ tone: 'error', message: 'File icon harus berupa gambar.' });
-      event.target.value = '';
-      return;
-    }
-    if (file.size > 250_000) {
-      setNotice({ tone: 'error', message: 'Ukuran icon maksimal 250 KB agar dashboard tetap ringan.' });
-      event.target.value = '';
-      return;
-    }
-
-    const reader = new FileReader();
-    reader.onload = () => {
+    try {
+      setNotice({ tone: 'info', message: 'Mengoptimalkan icon...' });
+      const compressed = await compressIcon(file);
       updateShortcut(id, {
         iconMode: 'custom',
-        customIconDataUrl: String(reader.result),
+        customIconDataUrl: compressed.dataUrl,
       });
-      setNotice({ tone: 'success', message: 'Icon custom siap digunakan. Klik Save Perubahan untuk menyimpan.' });
+      const originalKb = Math.max(1, Math.round(file.size / 1024));
+      const compressedKb = Math.max(1, Math.round(compressed.dataUrl.length * 0.75 / 1024));
+      setNotice({
+        tone: 'success',
+        message: `Icon otomatis dioptimalkan dari ${originalKb} KB menjadi sekitar ${compressedKb} KB (${compressed.width}×${compressed.height}). Klik Save Perubahan untuk menyimpan.`,
+      });
+    } catch (error) {
+      setNotice({ tone: 'error', message: error instanceof Error ? error.message : 'Gagal mengompres icon.' });
+    } finally {
       event.target.value = '';
-    };
-    reader.readAsDataURL(file);
+    }
   }
 
   function clearCustomIcon(id: string) {
@@ -395,7 +393,7 @@ export default function AdminPage() {
                   </label>
                   <label className="upload-field">
                     <span>Upload</span>
-                    <input className="field file-field" type="file" accept="image/*" onChange={(event) => uploadCustomIcon(shortcut.id, event)} />
+                    <input className="field file-field" type="file" accept="image/*" onChange={(event) => void uploadCustomIcon(shortcut.id, event)} />
                     {shortcut.customIconDataUrl ? (
                       <button className="text-button" type="button" onClick={() => clearCustomIcon(shortcut.id)}>
                         Hapus upload
