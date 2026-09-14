@@ -1,7 +1,7 @@
 import { useEffect, useMemo, useState } from 'react';
 import { ArrowUpRight, ChevronDown } from '../lib/icons';
 import ShortcutGlyph from './ShortcutGlyph';
-import { Shortcut, ShortcutCategory } from '../lib/shortcuts';
+import { getShortcutHref, isDownloadCard, Shortcut, ShortcutCategory } from '../lib/shortcuts';
 
 const COLLAPSED_CATEGORIES_KEY = 'apphub.collapsedCategories.v1';
 
@@ -90,11 +90,12 @@ export default function ShortcutGrid({ shortcuts, categories, query, sortMode }:
               {category.shortcuts.map((shortcut) => (
                 <a
                   className="shortcut-card group"
-                  href={shortcut.url}
-                  target="_blank"
+                  href={getShortcutHref(shortcut)}
+                  target={isDownloadCard(shortcut) ? undefined : '_blank'}
                   rel="noreferrer"
                   key={shortcut.id}
-                  aria-label={`Buka ${shortcut.name}`}
+                  download={isDownloadCard(shortcut) ? true : undefined}
+                  aria-label={isDownloadCard(shortcut) ? `Unduh ${shortcut.name}` : `Buka ${shortcut.name}`}
                 >
                   <span className="shortcut-launch" aria-hidden="true">
                     <ArrowUpRight size={15} strokeWidth={2.4} />

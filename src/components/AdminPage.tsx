@@ -101,6 +101,7 @@ export default function AdminPage() {
     categoryId: string;
     icon: Shortcut['icon'];
     color: string;
+    openMode: Shortcut['openMode'];
   }) {
     const alreadyLinked = shortcuts.some(
       (item) => item.url.trim().toLowerCase() === input.url.trim().toLowerCase() && item.name.trim().toLowerCase() === input.name.trim().toLowerCase(),
@@ -126,6 +127,7 @@ export default function AdminPage() {
           categoryId,
           icon: input.icon,
           color: input.color,
+          openMode: input.openMode === 'download' ? 'download' : 'tab',
           // The URL is an app-relative path, so there is no host to fetch a
           // favicon from. Use the icon the uploader picked instead.
           iconMode: 'generic',

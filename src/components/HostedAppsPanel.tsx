@@ -1,6 +1,6 @@
 import { ChangeEvent, useEffect, useState } from 'react';
-import { Plus, Trash, Upload, shortcutIconNames } from '../lib/icons';
-import { deleteHostedApp, HostedApp, listHostedApps, uploadHostedApp } from '../lib/adminApi';
+import { Download, Plus, Trash, Upload, shortcutIconNames } from '../lib/icons';
+import { deleteHostedApp, downloadHostedApp, HostedApp, listHostedApps, uploadHostedApp } from '../lib/adminApi';
 import { Shortcut, ShortcutCategory } from '../lib/shortcuts';
 
 type Notice = {
@@ -11,7 +11,14 @@ type Notice = {
 type HostedAppsPanelProps = {
   onNotice: (notice: Notice) => void;
   categories: ShortcutCategory[];
-  onAddShortcut: (input: { name: string; url: string; categoryId: string; icon: Shortcut['icon']; color: string }) => void;
+  onAddShortcut: (input: {
+    name: string;
+    url: string;
+    categoryId: string;
+    icon: Shortcut['icon'];
+    color: string;
+    openMode: Shortcut['openMode'];
+  }) => void;
   onDeletedApp: (url: string, name: string) => void;
 };
 
@@ -29,6 +36,12 @@ type Draft = {
   file: File | null;
   icon: Shortcut['icon'];
   color: string;
+  /**
+   * 'download' keeps the app offline: the card fetches the file and saves it,
+   * so it runs from local disk. 'view' serves it as a web page, which means
+   * Cloudflare is really hosting it.
+   */
+  cardAction: 'download' | 'view';
 };
 
 function createDraft(categoryId: string): Draft {
@@ -39,6 +52,7 @@ function createDraft(categoryId: string): Draft {
     file: null,
     icon: 'Home',
     color: '#334155',
+    cardAction: 'download',
   };
 }
 
@@ -119,6 +133,7 @@ export default function HostedAppsPanel({ onNotice, categories, onAddShortcut, o
           categoryId: draft.categoryId,
           icon: draft.icon,
           color: draft.color,
+          openMode: draft.cardAction === 'download' ? 'download' : 'tab',
         });
         uploaded += 1;
       } catch (error) {
@@ -149,6 +164,21 @@ export default function HostedAppsPanel({ onNotice, categories, onAddShortcut, o
       onDeletedApp(`/apps/${app.id}/`, app.name);
     } catch (error) {
       onNotice({ tone: 'error', message: error instanceof Error ? error.message : 'Gagal menghapus aplikasi.' });
+    } finally {
+      setBusy(false);
+    }
+  }
+
+  async function handleDownload(app: HostedApp) {
+    setBusy(true);
+    try {
+      const filename = await downloadHostedApp(app);
+      onNotice({
+        tone: 'success',
+        message: `${filename} diunduh. Buka file itu dari folder Downloads untuk jalan sepenuhnya offline.`,
+      });
+    } catch (error) {
+      onNotice({ tone: 'error', message: error instanceof Error ? error.message : 'Gagal mengunduh file.' });
     } finally {
       setBusy(false);
     }
@@ -216,6 +246,16 @@ export default function HostedAppsPanel({ onNotice, categories, onAddShortcut, o
                 aria-label={`Warna icon aplikasi ${index + 1}`}
                 disabled={busy}
               />
+              <select
+                className="field sm:col-span-2"
+                value={draft.cardAction}
+                onChange={(event) => updateDraft(draft.id, { cardAction: event.target.value as Draft['cardAction'] })}
+                aria-label={`Perilaku kartu aplikasi ${index + 1}`}
+                disabled={busy}
+              >
+                <option value="download">Kartu mengunduh file (offline)</option>
+                <option value="view">Kartu membuka sebagai halaman web</option>
+              </select>
               <label className={`secondary-button cursor-pointer justify-center text-center ${busy ? 'opacity-60' : ''}`}>
                 <Upload size={18} />
                 {draft.file ? draft.file.name.slice(0, 28) : 'Pilih file HTML'}
@@ -267,6 +307,10 @@ export default function HostedAppsPanel({ onNotice, categories, onAddShortcut, o
                 <a className="text-button" href={`/apps/${app.id}/`} target="_blank" rel="noreferrer">
                   Buka
                 </a>
+                <button className="text-button" type="button" onClick={() => void handleDownload(app)} disabled={busy}>
+                  <Download size={16} />
+                  Download
+                </button>
                 <button
                   className="text-button"
                   type="button"
@@ -277,6 +321,7 @@ export default function HostedAppsPanel({ onNotice, categories, onAddShortcut, o
                       categoryId: defaultCategoryId,
                       icon: 'Home',
                       color: '#334155',
+                      openMode: 'download',
                     })
                   }
                 >

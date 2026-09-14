@@ -1,5 +1,34 @@
 import { describe, expect, it } from 'vitest';
-import { dedupeShortcuts, isLocalHostTarget, normalizeUrl, Shortcut } from './shortcuts';
+import {
+  dedupeShortcuts,
+  getShortcutHref,
+  isDownloadCard,
+  isLocalHostTarget,
+  normalizeUrl,
+  Shortcut,
+} from './shortcuts';
+
+describe('offline download cards', () => {
+  it('points an offline card at the download endpoint, not the served page', () => {
+    expect(getShortcutHref({ url: '/apps/pii-masking-tool/', openMode: 'download' })).toBe('/api/apps/pii-masking-tool');
+    expect(getShortcutHref({ url: '/apps/pii-masking-tool', openMode: 'download' })).toBe('/api/apps/pii-masking-tool');
+  });
+
+  it('leaves a normal card pointing at its URL', () => {
+    expect(getShortcutHref({ url: '/apps/tool/', openMode: 'tab' })).toBe('/apps/tool/');
+    expect(getShortcutHref({ url: 'https://x.test/', openMode: 'tab' })).toBe('https://x.test/');
+  });
+
+  it('does not rewrite a download card that is not a hosted app path', () => {
+    expect(getShortcutHref({ url: 'https://example.com/a.html', openMode: 'download' })).toBe('https://example.com/a.html');
+  });
+
+  it('flags only download cards as downloads', () => {
+    expect(isDownloadCard({ openMode: 'download' })).toBe(true);
+    expect(isDownloadCard({ openMode: 'tab' })).toBe(false);
+    expect(isDownloadCard({})).toBe(false);
+  });
+});
 
 function card(overrides: Partial<Shortcut> & { id: string }): Shortcut {
   return {

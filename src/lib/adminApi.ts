@@ -67,3 +67,26 @@ export async function deleteHostedApp(id: string) {
     throw new Error(String(payload.message || 'Gagal menghapus aplikasi.'));
   }
 }
+
+/**
+ * Download the stored bytes so the file can be opened from disk instead of
+ * being served by Cloudflare. The stored file has no extension, so a filename
+ * is always supplied for the save dialog.
+ */
+export async function downloadHostedApp(app: HostedApp) {
+  const response = await fetch(`/api/apps/${encodeURIComponent(app.id)}`, { cache: 'no-store' });
+  if (!response.ok) {
+    throw new Error('Gagal mengunduh file.');
+  }
+  const blob = await response.blob();
+  const filename = `${app.id}.html`;
+  const url = URL.createObjectURL(blob);
+  const link = document.createElement('a');
+  link.href = url;
+  link.download = filename;
+  document.body.appendChild(link);
+  link.click();
+  link.remove();
+  URL.revokeObjectURL(url);
+  return filename;
+}
