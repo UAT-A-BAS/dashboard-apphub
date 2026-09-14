@@ -174,6 +174,14 @@ export function normalizeUrl(value: string) {
   const trimmed = value.trim();
   if (!trimmed) return 'https://example.com';
   if (trimmed.startsWith('file:') || trimmed.startsWith('//')) return trimmed;
+  // A leading slash is an app-relative path, such as a file hosted at
+  // /apps/<id>/. Prefixing a scheme would turn it into https:///apps/<id>/,
+  // which is not a URL at all. Keep it relative so it resolves against AppHub.
+  if (trimmed.startsWith('/')) return trimmed;
+  // Repair cards saved while that bug existed, so they start working again
+  // without the owner having to re-add them by hand.
+  const brokenScheme = trimmed.match(/^https?:\/{3,}(.*)$/i);
+  if (brokenScheme) return `/${brokenScheme[1].replace(/^\/+/, '')}`;
   if (/^https?:\/\//i.test(trimmed)) {
     // A local server cannot present a certificate the browser will trust, so a
     // typed https://localhost:... link would always fail. Fall back to http.

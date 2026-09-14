@@ -95,7 +95,13 @@ export default function AdminPage() {
    * uploader chose. The card joins the editor and is persisted with the rest of
    * the config when the admin clicks Save Perubahan.
    */
-  function addHostedAppShortcut(input: { name: string; url: string; categoryId: string }) {
+  function addHostedAppShortcut(input: {
+    name: string;
+    url: string;
+    categoryId: string;
+    icon: Shortcut['icon'];
+    color: string;
+  }) {
     let added = false;
     setShortcuts((items) => {
       if (items.length >= MAX_SHORTCUTS) return items;
@@ -104,7 +110,20 @@ export default function AdminPage() {
         ? input.categoryId
         : categories[0]?.id ?? draft.categoryId;
       added = true;
-      return [...items, { ...draft, name: input.name.slice(0, 48), url: input.url, categoryId }];
+      return [
+        ...items,
+        {
+          ...draft,
+          name: input.name.slice(0, 48),
+          url: input.url,
+          categoryId,
+          icon: input.icon,
+          color: input.color,
+          // The URL is an app-relative path, so there is no host to fetch a
+          // favicon from. Use the icon the uploader picked instead.
+          iconMode: 'generic',
+        },
+      ];
     });
     if (!added) {
       setNotice({

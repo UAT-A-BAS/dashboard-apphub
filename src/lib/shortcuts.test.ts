@@ -57,6 +57,18 @@ describe('normalizeUrl', () => {
     expect(normalizeUrl('//cdn.example.com/tool.html')).toBe('//cdn.example.com/tool.html');
   });
 
+  it('keeps an app-relative path relative so hosted apps resolve against AppHub', () => {
+    expect(normalizeUrl('/apps/kalkulator/')).toBe('/apps/kalkulator/');
+    expect(normalizeUrl('/apps/big-tool/')).toBe('/apps/big-tool/');
+    expect(normalizeUrl('/')).toBe('/');
+  });
+
+  it('repairs cards saved while a scheme was wrongly prefixed to a relative path', () => {
+    expect(normalizeUrl('https:///apps/kalkulator/')).toBe('/apps/kalkulator/');
+    expect(normalizeUrl('http:///apps/big-tool/')).toBe('/apps/big-tool/');
+    expect(normalizeUrl('https:////apps/x/')).toBe('/apps/x/');
+  });
+
   it('falls back to example.com when the value is blank', () => {
     expect(normalizeUrl('   ')).toBe('https://example.com');
   });

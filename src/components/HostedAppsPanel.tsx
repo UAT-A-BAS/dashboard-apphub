@@ -1,7 +1,7 @@
 import { ChangeEvent, useEffect, useState } from 'react';
-import { Plus, Trash, Upload } from '../lib/icons';
+import { Plus, Trash, Upload, shortcutIconNames } from '../lib/icons';
 import { deleteHostedApp, HostedApp, listHostedApps, uploadHostedApp } from '../lib/adminApi';
-import { ShortcutCategory } from '../lib/shortcuts';
+import { Shortcut, ShortcutCategory } from '../lib/shortcuts';
 
 type Notice = {
   tone: 'success' | 'error' | 'info';
@@ -11,7 +11,7 @@ type Notice = {
 type HostedAppsPanelProps = {
   onNotice: (notice: Notice) => void;
   categories: ShortcutCategory[];
-  onAddShortcut: (input: { name: string; url: string; categoryId: string }) => void;
+  onAddShortcut: (input: { name: string; url: string; categoryId: string; icon: Shortcut['icon']; color: string }) => void;
 };
 
 function formatBytes(bytes: number) {
@@ -26,6 +26,8 @@ type Draft = {
   name: string;
   categoryId: string;
   file: File | null;
+  icon: Shortcut['icon'];
+  color: string;
 };
 
 function createDraft(categoryId: string): Draft {
@@ -34,6 +36,8 @@ function createDraft(categoryId: string): Draft {
     name: '',
     categoryId,
     file: null,
+    icon: 'Home',
+    color: '#334155',
   };
 }
 
@@ -108,7 +112,13 @@ export default function HostedAppsPanel({ onNotice, categories, onAddShortcut }:
         const html = await draft.file!.text();
         const result = await uploadHostedApp(draft.name.trim(), html);
         setApps((items) => [...items, result.app]);
-        onAddShortcut({ name: result.app.name, url: result.url, categoryId: draft.categoryId });
+        onAddShortcut({
+          name: result.app.name,
+          url: result.url,
+          categoryId: draft.categoryId,
+          icon: draft.icon,
+          color: draft.color,
+        });
         uploaded += 1;
       } catch (error) {
         failures.push(`${draft.name}: ${error instanceof Error ? error.message : 'gagal'}`);
@@ -182,6 +192,27 @@ export default function HostedAppsPanel({ onNotice, categories, onAddShortcut }:
                   </option>
                 ))}
               </select>
+              <select
+                className="field"
+                value={draft.icon}
+                onChange={(event) => updateDraft(draft.id, { icon: event.target.value as Shortcut['icon'] })}
+                aria-label={`Icon aplikasi ${index + 1}`}
+                disabled={busy}
+              >
+                {shortcutIconNames.map((name) => (
+                  <option key={name} value={name}>
+                    {name}
+                  </option>
+                ))}
+              </select>
+              <input
+                className="field h-12 p-1"
+                type="color"
+                value={draft.color}
+                onChange={(event) => updateDraft(draft.id, { color: event.target.value })}
+                aria-label={`Warna icon aplikasi ${index + 1}`}
+                disabled={busy}
+              />
               <label className={`secondary-button cursor-pointer justify-center text-center ${busy ? 'opacity-60' : ''}`}>
                 <Upload size={18} />
                 {draft.file ? draft.file.name.slice(0, 28) : 'Pilih file HTML'}
@@ -236,7 +267,15 @@ export default function HostedAppsPanel({ onNotice, categories, onAddShortcut }:
                 <button
                   className="text-button"
                   type="button"
-                  onClick={() => onAddShortcut({ name: app.name, url: `/apps/${app.id}/`, categoryId: defaultCategoryId })}
+                  onClick={() =>
+                    onAddShortcut({
+                      name: app.name,
+                      url: `/apps/${app.id}/`,
+                      categoryId: defaultCategoryId,
+                      icon: 'Home',
+                      color: '#334155',
+                    })
+                  }
                 >
                   Tambah Kartu
                 </button>
