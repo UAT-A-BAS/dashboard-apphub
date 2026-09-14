@@ -2,9 +2,10 @@
 // directories under functions/ that start with "_" are not routed by
 // Cloudflare Pages, so this module is import-only.
 
-// Cloudflare KV allows 25 MiB per value, but a single-page app that large would
-// be painful to upload through the admin form. Keep a deliberate, visible cap.
-export const MAX_APP_BYTES = 2 * 1024 * 1024;
+// This is Cloudflare KV's hard limit for a single value, not an AppHub choice.
+// Measured in bytes of the UTF-8 encoded file. Uploads larger than this cannot
+// be stored at all, so the limit is surfaced to the admin instead of failing late.
+export const MAX_APP_BYTES = 25 * 1024 * 1024;
 
 export const APP_INDEX_KEY = 'apps:index';
 
@@ -40,7 +41,7 @@ export function isLikelyHtml(value) {
 }
 
 export function appByteLimitMessage(bytes) {
-  return `File terlalu besar (${formatBytes(bytes)}). Maksimum ${formatBytes(MAX_APP_BYTES)}.`;
+  return `File terlalu besar (${formatBytes(bytes)}). Batas penyimpanan Cloudflare ${formatBytes(MAX_APP_BYTES)} per file.`;
 }
 
 export function formatBytes(bytes) {

@@ -5,11 +5,18 @@ import { describe, expect, it } from 'vitest';
 import {
   appContentSecurityPolicy,
   isLikelyHtml,
+  MAX_APP_BYTES,
   normalizeAppName,
   slugifyName,
   uniqueAppId,
   utf8ByteLength,
 } from '../../functions/_lib/appHtml.js';
+
+describe('MAX_APP_BYTES', () => {
+  it('matches the Cloudflare KV value limit, not an AppHub preference', () => {
+    expect(MAX_APP_BYTES).toBe(25 * 1024 * 1024);
+  });
+});
 
 describe('slugifyName', () => {
   it('produces a URL-safe id', () => {
