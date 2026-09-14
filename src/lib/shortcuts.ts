@@ -135,6 +135,11 @@ export const defaultShortcuts: Shortcut[] = [
 const safeHex = /^#[0-9a-fA-F]{6}$/;
 const safeIconModes = ['favicon', 'custom', 'generic'];
 
+// Hosts reachable only from the machine that runs the server. Browsers allow
+// plain http for these even when the page itself is served over https.
+const LOCAL_HOST_PATTERN =
+  /^(localhost|0\.0\.0\.0|::1|\[::1\]|127\.\d{1,3}\.\d{1,3}\.\d{1,3}|10\.\d{1,3}\.\d{1,3}\.\d{1,3}|192\.168\.\d{1,3}\.\d{1,3}|172\.(?:1[6-9]|2\d|3[01])\.\d{1,3}\.\d{1,3}|[a-z0-9-]+\.local)$/i;
+
 type FaviconCacheEntry = {
   url?: string;
   failed?: string[];
@@ -143,11 +148,38 @@ type FaviconCacheEntry = {
 
 type FaviconCache = Record<string, FaviconCacheEntry>;
 
+function parseHostname(value: string) {
+  const trimmed = value.trim();
+  if (!trimmed) return '';
+  const withScheme = /^[a-z][a-z0-9+.-]*:\/\//i.test(trimmed) ? trimmed : `http://${trimmed}`;
+  try {
+    return new URL(withScheme).hostname.toLowerCase();
+  } catch {
+    return '';
+  }
+}
+
+/**
+ * True when the URL points at the visitor's own machine (localhost, loopback,
+ * private LAN address, or a `.local` name). Such links only work on the device
+ * that runs the server, and must use http because a local server rarely has
+ * a trusted TLS certificate.
+ */
+export function isLocalHostTarget(value: string) {
+  const hostname = parseHostname(value);
+  return Boolean(hostname) && LOCAL_HOST_PATTERN.test(hostname);
+}
+
 export function normalizeUrl(value: string) {
   const trimmed = value.trim();
   if (!trimmed) return 'https://example.com';
-  if (/^https?:\/\//i.test(trimmed)) return trimmed;
-  return `https://${trimmed}`;
+  if (trimmed.startsWith('file:') || trimmed.startsWith('//')) return trimmed;
+  if (/^https?:\/\//i.test(trimmed)) {
+    // A local server cannot present a certificate the browser will trust, so a
+    // typed https://localhost:... link would always fail. Fall back to http.
+    return /^https:\/\//i.test(trimmed) && isLocalHostTarget(trimmed) ? `http://${trimmed.slice('https://'.length)}` : trimmed;
+  }
+  return `${isLocalHostTarget(trimmed) ? 'http' : 'https'}://${trimmed}`;
 }
 
 export function getShortcutHost(url: string) {

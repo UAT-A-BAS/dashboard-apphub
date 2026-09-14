@@ -5,6 +5,7 @@ import {
   createCategoryDraft,
   createShortcutDraft,
   fetchGlobalShortcutConfig,
+  isLocalHostTarget,
   MAX_SHORTCUTS,
   readShortcutConfig,
   saveGlobalShortcutConfig,
@@ -341,6 +342,11 @@ export default function AdminPage() {
                   <label>
                     <span>URL</span>
                     <input className="field" value={shortcut.url} onChange={(event) => updateShortcut(shortcut.id, { url: event.target.value })} />
+                    {isLocalHostTarget(shortcut.url) ? (
+                      <span className="mt-1 block text-xs font-semibold text-amber-600">
+                        Lokal: hanya terbuka di komputer yang menjalankan servernya.
+                      </span>
+                    ) : null}
                   </label>
                   <label>
                     <span>Kategori</span>
