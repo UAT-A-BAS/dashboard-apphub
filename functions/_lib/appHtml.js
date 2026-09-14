@@ -1,0 +1,88 @@
+// Shared helpers for hosting uploaded single-file HTML apps. Files and
+// directories under functions/ that start with "_" are not routed by
+// Cloudflare Pages, so this module is import-only.
+
+// Cloudflare KV allows 25 MiB per value, but a single-page app that large would
+// be painful to upload through the admin form. Keep a deliberate, visible cap.
+export const MAX_APP_BYTES = 2 * 1024 * 1024;
+
+export const APP_INDEX_KEY = 'apps:index';
+
+export function appContentKey(id) {
+  return `apps:item:${id}`;
+}
+
+export function normalizeAppName(value) {
+  return String(value ?? '').trim().slice(0, 60);
+}
+
+/**
+ * Turn a display name into a URL-safe slug. Returns an empty string when the
+ * name has no usable characters, so the caller can fall back to a random id.
+ */
+export function slugifyName(value) {
+  return String(value ?? '')
+    .toLowerCase()
+    .normalize('NFKD')
+    .replace(/[\u0300-\u036f]/g, '')
+    .replace(/[^a-z0-9]+/g, '-')
+    .replace(/^-+|-+$/g, '')
+    .slice(0, 48);
+}
+
+export function utf8ByteLength(value) {
+  return new TextEncoder().encode(String(value ?? '')).byteLength;
+}
+
+export function isLikelyHtml(value) {
+  const head = String(value ?? '').slice(0, 4000).toLowerCase();
+  return head.includes('<html') || head.includes('<!doctype') || head.includes('<body') || head.includes('<script');
+}
+
+export function appByteLimitMessage(bytes) {
+  return `File terlalu besar (${formatBytes(bytes)}). Maksimum ${formatBytes(MAX_APP_BYTES)}.`;
+}
+
+export function formatBytes(bytes) {
+  const value = Number(bytes) || 0;
+  if (value < 1024) return `${value} B`;
+  if (value < 1024 * 1024) return `${(value / 1024).toFixed(1)} KB`;
+  return `${(value / (1024 * 1024)).toFixed(2)} MB`;
+}
+
+/**
+ * Each uploaded app is served as an opaque-origin document, so it cannot read
+ * the AppHub admin cookie, localStorage, or call the admin API with credentials.
+ * Inline scripts and styles stay allowed because single-file apps depend on them.
+ */
+export function appContentSecurityPolicy() {
+  return [
+    "sandbox allow-scripts allow-forms allow-modals allow-popups allow-downloads",
+    "default-src 'none'",
+    "script-src 'unsafe-inline' 'unsafe-eval' blob:",
+    "style-src 'unsafe-inline'",
+    'img-src data: blob: https:',
+    'font-src data: https:',
+    'media-src data: blob: https:',
+    'connect-src https:',
+    "base-uri 'none'",
+    "form-action 'none'",
+    "frame-ancestors 'none'",
+  ].join('; ');
+}
+
+/**
+ * Pick a slug that is not already taken. Falls back to a random id when the
+ * name slugifies to nothing or every numbered variant is taken.
+ */
+export function uniqueAppId(name, takenIds, randomId = () => crypto.randomUUID().slice(0, 8)) {
+  const taken = new Set(takenIds);
+  const base = slugifyName(name);
+  if (!base) return randomId();
+  if (!taken.has(base)) return base;
+  for (let suffix = 2; suffix <= 50; suffix += 1) {
+    const candidate = `${base}-${suffix}`;
+    if (!taken.has(candidate)) return candidate;
+  }
+  return randomId();
+}

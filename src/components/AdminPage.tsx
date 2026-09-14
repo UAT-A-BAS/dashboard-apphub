@@ -15,6 +15,7 @@ import {
 } from '../lib/shortcuts';
 import ShortcutGlyph from './ShortcutGlyph';
 import { compressIcon } from '../lib/imageCompression';
+import HostedAppsPanel from './HostedAppsPanel';
 
 type Notice = {
   tone: 'success' | 'error' | 'info';
@@ -87,6 +88,27 @@ export default function AdminPage() {
       items.length >= MAX_SHORTCUTS ? items : [...items, { ...createShortcutDraft(items.length), categoryId: categories[0]?.id }],
     );
     setNotice({ tone: 'info', message: 'Aplikasi baru ditambahkan. Lengkapi nama dan URL, lalu simpan.' });
+  }
+
+  /**
+   * Point a card at a file hosted in AppHub. Prefers filling the URL of the
+   * most recently added card that still holds a placeholder URL, so uploading
+   * then wiring the card is two clicks instead of a manual copy-paste.
+   */
+  function useHostedUrl(url: string) {
+    const target = [...shortcuts].reverse().find((item) => !item.url.trim() || item.url.includes('example.com'));
+    if (target) {
+      updateShortcut(target.id, { url });
+      setNotice({ tone: 'info', message: `URL diisi ke "${target.name}". Klik Save Perubahan untuk menyimpan.` });
+      return;
+    }
+    if (shortcuts.length >= MAX_SHORTCUTS) {
+      setNotice({ tone: 'error', message: 'Jumlah aplikasi sudah maksimum. Hapus satu dulu.' });
+      return;
+    }
+    const draft = createShortcutDraft(shortcuts.length);
+    setShortcuts((items) => [...items, { ...draft, url }]);
+    setNotice({ tone: 'info', message: 'Kartu baru dibuat dengan URL itu. Ganti namanya, lalu Save Perubahan.' });
   }
 
   function removeShortcut(id: string) {
@@ -275,6 +297,8 @@ export default function AdminPage() {
         </header>
 
         {notice ? <NoticeBanner notice={notice} /> : null}
+
+        <HostedAppsPanel onNotice={setNotice} onPickUrl={useHostedUrl} />
 
         <section className="category-admin-panel">
           <div className="category-admin-head">
