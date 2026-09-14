@@ -12,6 +12,7 @@ type HostedAppsPanelProps = {
   onNotice: (notice: Notice) => void;
   categories: ShortcutCategory[];
   onAddShortcut: (input: { name: string; url: string; categoryId: string; icon: Shortcut['icon']; color: string }) => void;
+  onDeletedApp: (url: string, name: string) => void;
 };
 
 function formatBytes(bytes: number) {
@@ -41,7 +42,7 @@ function createDraft(categoryId: string): Draft {
   };
 }
 
-export default function HostedAppsPanel({ onNotice, categories, onAddShortcut }: HostedAppsPanelProps) {
+export default function HostedAppsPanel({ onNotice, categories, onAddShortcut, onDeletedApp }: HostedAppsPanelProps) {
   const [apps, setApps] = useState<HostedApp[]>([]);
   const [maxBytes, setMaxBytes] = useState(0);
   const defaultCategoryId = categories[0]?.id ?? '';
@@ -138,12 +139,14 @@ export default function HostedAppsPanel({ onNotice, categories, onAddShortcut }:
   }
 
   async function handleDelete(app: HostedApp) {
-    if (!window.confirm(`Hapus "${app.name}" dari AppHub? Kartu yang memakai URL ini akan berhenti bekerja.`)) return;
+    if (!window.confirm(`Hapus file "${app.name}" dari AppHub? Kartu yang menunjuk ke file ini juga dihapus dari daftar.`)) return;
     setBusy(true);
     try {
       await deleteHostedApp(app.id);
       setApps((items) => items.filter((item) => item.id !== app.id));
-      onNotice({ tone: 'success', message: `${app.name} dihapus.` });
+      // Removing only the file left its shortcut card behind, pointing at a URL
+      // that no longer exists. Drop the card too so the two stay in step.
+      onDeletedApp(`/apps/${app.id}/`, app.name);
     } catch (error) {
       onNotice({ tone: 'error', message: error instanceof Error ? error.message : 'Gagal menghapus aplikasi.' });
     } finally {

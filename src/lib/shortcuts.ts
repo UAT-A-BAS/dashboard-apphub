@@ -337,6 +337,26 @@ function appendMissingDefaults(shortcuts: Shortcut[]) {
   return next.slice(0, MAX_SHORTCUTS);
 }
 
+/**
+ * Collapse cards that are the same app: identical name and identical URL.
+ * Uploading a file and then also pressing "Tambah Kartu" used to leave two
+ * entries for one app, which looked like the delete button had failed.
+ * Only exact name+URL pairs are merged, so two deliberately different cards
+ * pointing at one URL (different icons, say) are left alone.
+ */
+export function dedupeShortcuts(shortcuts: Shortcut[]) {
+  // Walk backwards so the most recently placed entry wins; that is the one the
+  // owner is most likely to have just edited, including its icon and color.
+  const keptByKey = new Map<string, Shortcut>();
+  for (let index = shortcuts.length - 1; index >= 0; index -= 1) {
+    const shortcut = shortcuts[index];
+    const key = `${shortcut.name.trim().toLowerCase()}\u0000${shortcut.url.trim().toLowerCase()}`;
+    if (!keptByKey.has(key)) keptByKey.set(key, shortcut);
+  }
+  const keepIds = new Set([...keptByKey.values()].map((shortcut) => shortcut.id));
+  return shortcuts.filter((shortcut) => keepIds.has(shortcut.id));
+}
+
 function normalizeConfig(input: Partial<ShortcutConfig> | null, appendDefaults = false): ShortcutConfig {
   const categories = (input?.categories?.length ? input.categories : defaultCategories).map((item, index) => sanitizeCategory(item, index));
   const categoryIds = new Set(categories.map((item) => item.id));
@@ -344,7 +364,8 @@ function normalizeConfig(input: Partial<ShortcutConfig> | null, appendDefaults =
     const shortcut = sanitizeShortcut(item, index);
     return categoryIds.has(shortcut.categoryId || '') ? shortcut : { ...shortcut, categoryId: categories[0].id };
   });
-  const finalShortcuts = appendDefaults ? appendMissingDefaults(shortcuts) : shortcuts;
+  // Dedupe here so duplicate cards self-heal on read and cannot be written back.
+  const finalShortcuts = dedupeShortcuts(appendDefaults ? appendMissingDefaults(shortcuts) : shortcuts);
   return {
     shortcuts: finalShortcuts.map((shortcut) => (categoryIds.has(shortcut.categoryId || '') ? shortcut : { ...shortcut, categoryId: categories[0].id })),
     categories,

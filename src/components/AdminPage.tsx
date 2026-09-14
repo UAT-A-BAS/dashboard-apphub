@@ -102,6 +102,13 @@ export default function AdminPage() {
     icon: Shortcut['icon'];
     color: string;
   }) {
+    const alreadyLinked = shortcuts.some(
+      (item) => item.url.trim().toLowerCase() === input.url.trim().toLowerCase() && item.name.trim().toLowerCase() === input.name.trim().toLowerCase(),
+    );
+    if (alreadyLinked) {
+      setNotice({ tone: 'info', message: `Kartu untuk ${input.name} sudah ada di daftar.` });
+      return;
+    }
     let added = false;
     setShortcuts((items) => {
       if (items.length >= MAX_SHORTCUTS) return items;
@@ -134,7 +141,29 @@ export default function AdminPage() {
   }
 
   function removeShortcut(id: string) {
+    const target = shortcuts.find((item) => item.id === id);
     setShortcuts((items) => items.filter((item) => item.id !== id));
+    setNotice({
+      tone: 'info',
+      message: `${target?.name ?? 'Kartu'} dihapus dari daftar. Klik Save Perubahan untuk menyimpannya, kalau tidak akan muncul lagi saat halaman dibuka ulang.`,
+    });
+  }
+
+  /**
+   * Called after a hosted file is deleted, so any card pointing at it goes away
+   * in the same pass instead of lingering as a dead link.
+   */
+  function removeCardsForDeletedApp(url: string, name: string) {
+    const removed = shortcuts.filter((item) => item.url.trim().toLowerCase() === url.toLowerCase()).length;
+    if (!removed) {
+      setNotice({ tone: 'success', message: `File ${name} dihapus.` });
+      return;
+    }
+    setShortcuts((items) => items.filter((item) => item.url.trim().toLowerCase() !== url.toLowerCase()));
+    setNotice({
+      tone: 'success',
+      message: `File ${name} dan ${removed} kartunya dihapus dari daftar. Klik Save Perubahan untuk menyimpan.`,
+    });
   }
 
   function updateIconMode(id: string, iconMode: NonNullable<Shortcut['iconMode']>) {
@@ -214,6 +243,15 @@ export default function AdminPage() {
       const clean = saveShortcutConfig({ shortcuts, categories });
       setShortcuts(clean.shortcuts);
       setCategories(clean.categories);
+      // An expired session is the common cause here, and it silently leaves the
+      // edit looking applied until the page reloads and server state wins. Drop
+      // back to the login screen so the failure is obvious and the change can be
+      // saved for real after signing in again.
+      if (/session admin tidak valid/i.test(String(error instanceof Error ? error.message : ''))) {
+        setAuthenticated(false);
+        setNotice({ tone: 'error', message: 'Sesi admin berakhir, jadi perubahan belum tersimpan. Masuk lagi lalu simpan.' });
+        return;
+      }
       setNotice({
         tone: 'error',
         message: `${error instanceof Error ? error.message : 'Gagal menyimpan shortcut global.'} Perubahan hanya tersimpan lokal di browser ini.`,
@@ -320,7 +358,12 @@ export default function AdminPage() {
 
         {notice ? <NoticeBanner notice={notice} /> : null}
 
-        <HostedAppsPanel onNotice={setNotice} categories={categories} onAddShortcut={addHostedAppShortcut} />
+        <HostedAppsPanel
+          onNotice={setNotice}
+          categories={categories}
+          onAddShortcut={addHostedAppShortcut}
+          onDeletedApp={removeCardsForDeletedApp}
+        />
 
         <section className="category-admin-panel">
           <div className="category-admin-head">

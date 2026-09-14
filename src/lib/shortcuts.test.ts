@@ -1,5 +1,55 @@
 import { describe, expect, it } from 'vitest';
-import { isLocalHostTarget, normalizeUrl } from './shortcuts';
+import { dedupeShortcuts, isLocalHostTarget, normalizeUrl, Shortcut } from './shortcuts';
+
+function card(overrides: Partial<Shortcut> & { id: string }): Shortcut {
+  return {
+    name: 'Tool',
+    url: '/apps/tool/',
+    icon: 'Home',
+    color: '#111111',
+    categoryId: 'generators',
+    iconMode: 'generic',
+    ...overrides,
+  };
+}
+
+describe('dedupeShortcuts', () => {
+  it('collapses the same app added twice under one name and URL', () => {
+    const result = dedupeShortcuts([
+      card({ id: 'a', name: 'PII Masking Tool', color: '#334155' }),
+      card({ id: 'b', name: 'Scenario Splitter', url: '/apps/scenario-splitter/' }),
+      card({ id: 'c', name: 'PII Masking Tool', color: '#006aff', icon: 'NotebookTabs' }),
+    ]);
+    expect(result.map((item) => item.id)).toEqual(['b', 'c']);
+  });
+
+  it('keeps the most recent entry so the edited icon survives', () => {
+    const result = dedupeShortcuts([
+      card({ id: 'old', name: 'PII Masking Tool', color: '#334155' }),
+      card({ id: 'new', name: 'PII Masking Tool', color: '#006aff', icon: 'NotebookTabs' }),
+    ]);
+    expect(result).toHaveLength(1);
+    expect(result[0].id).toBe('new');
+    expect(result[0].color).toBe('#006aff');
+  });
+
+  it('treats name matching as case and whitespace insensitive', () => {
+    const result = dedupeShortcuts([
+      card({ id: 'a', name: 'PII Masking Tool' }),
+      card({ id: 'b', name: '  pii masking tool  ' }),
+    ]);
+    expect(result).toHaveLength(1);
+  });
+
+  it('leaves deliberately different cards alone', () => {
+    const result = dedupeShortcuts([
+      card({ id: 'a', name: 'Tool A', url: '/apps/one/' }),
+      card({ id: 'b', name: 'Tool B', url: '/apps/one/' }),
+      card({ id: 'c', name: 'Tool A', url: '/apps/two/' }),
+    ]);
+    expect(result).toHaveLength(3);
+  });
+});
 
 describe('isLocalHostTarget', () => {
   it('recognises loopback, private network, and .local names', () => {
