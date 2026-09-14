@@ -2,31 +2,30 @@ import { describe, expect, it } from 'vitest';
 import {
   dedupeShortcuts,
   getShortcutHref,
-  isDownloadCard,
+  hostedAppId,
+  isHostedAppUrl,
   isLocalHostTarget,
   normalizeUrl,
   Shortcut,
 } from './shortcuts';
 
-describe('offline download cards', () => {
-  it('points an offline card at the download endpoint, not the served page', () => {
-    expect(getShortcutHref({ url: '/apps/pii-masking-tool/', openMode: 'download' })).toBe('/api/apps/pii-masking-tool');
-    expect(getShortcutHref({ url: '/apps/pii-masking-tool', openMode: 'download' })).toBe('/api/apps/pii-masking-tool');
+describe('hosted app cards', () => {
+  it('recognises a stored file path in both spellings', () => {
+    expect(hostedAppId('/apps/pii-masking-tool/')).toBe('pii-masking-tool');
+    expect(hostedAppId('/apps/pii-masking-tool')).toBe('pii-masking-tool');
+    expect(isHostedAppUrl('/apps/pii-masking-tool/')).toBe(true);
   });
 
-  it('leaves a normal card pointing at its URL', () => {
-    expect(getShortcutHref({ url: '/apps/tool/', openMode: 'tab' })).toBe('/apps/tool/');
-    expect(getShortcutHref({ url: 'https://x.test/', openMode: 'tab' })).toBe('https://x.test/');
+  it('does not treat ordinary links as hosted files', () => {
+    expect(hostedAppId('https://example.com/a.html')).toBe('');
+    expect(hostedAppId('/apps/')).toBe('');
+    expect(hostedAppId('https://apphub-uat.pages.dev/apps/x/')).toBe('');
+    expect(isHostedAppUrl('https://generate-memo.pages.dev/')).toBe(false);
   });
 
-  it('does not rewrite a download card that is not a hosted app path', () => {
-    expect(getShortcutHref({ url: 'https://example.com/a.html', openMode: 'download' })).toBe('https://example.com/a.html');
-  });
-
-  it('flags only download cards as downloads', () => {
-    expect(isDownloadCard({ openMode: 'download' })).toBe(true);
-    expect(isDownloadCard({ openMode: 'tab' })).toBe(false);
-    expect(isDownloadCard({})).toBe(false);
+  it('always points a stored file card at the download endpoint', () => {
+    expect(getShortcutHref({ url: '/apps/tool/' })).toBe('/api/apps/tool');
+    expect(getShortcutHref({ url: 'https://x.test/' })).toBe('https://x.test/');
   });
 });
 

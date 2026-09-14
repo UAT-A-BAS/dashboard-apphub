@@ -2,6 +2,8 @@ import { useEffect, useState } from 'react';
 import ShortcutGrid from './ShortcutGrid';
 import WeatherPanel, { GreetingBlock } from './WeatherPanel';
 import { Search, X } from '../lib/icons';
+
+type Notice = { tone: 'info' | 'error' | 'success'; message: string };
 import {
   fetchGlobalShortcutConfig,
   readShortcutConfig,
@@ -23,6 +25,12 @@ export default function HomePage() {
   const [sortMode, setSortMode] = useState<'default' | 'az' | 'za'>('default');
   const [theme, setTheme] = useState<WeatherMode>(() => getThemeFromTime());
   const [renderMode, setRenderMode] = useState<'standard' | 'lite'>(() => getInitialRenderMode());
+  const [notice, setNotice] = useState<Notice | null>(null);
+
+  function showNotice(message: string, tone: Notice['tone']) {
+    setNotice({ message, tone });
+    window.setTimeout(() => setNotice((current) => (current?.message === message ? null : current)), 6000);
+  }
 
   useEffect(() => {
     const sync = () => {
@@ -104,7 +112,18 @@ export default function HomePage() {
               ))}
             </div>
           </section>
-          <ShortcutGrid shortcuts={shortcuts} categories={categories} query={searchQuery} sortMode={sortMode} />
+          <ShortcutGrid
+            shortcuts={shortcuts}
+            categories={categories}
+            query={searchQuery}
+            sortMode={sortMode}
+            onNotice={showNotice}
+          />
+          {notice ? (
+            <div className="app-notice" data-tone={notice.tone} role="status">
+              {notice.message}
+            </div>
+          ) : null}
           <footer className="app-footer pb-2 text-center text-sm font-semibold">
             Developed by Alex Surya Marcelo (UAT-A) <span aria-hidden="true">•</span> AppHub
           </footer>

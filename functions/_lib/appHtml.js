@@ -52,27 +52,6 @@ export function formatBytes(bytes) {
 }
 
 /**
- * Each uploaded app is served as an opaque-origin document, so it cannot read
- * the AppHub admin cookie, localStorage, or call the admin API with credentials.
- * Inline scripts and styles stay allowed because single-file apps depend on them.
- */
-export function appContentSecurityPolicy() {
-  return [
-    "sandbox allow-scripts allow-forms allow-modals allow-popups allow-downloads",
-    "default-src 'none'",
-    "script-src 'unsafe-inline' 'unsafe-eval' blob:",
-    "style-src 'unsafe-inline'",
-    'img-src data: blob: https:',
-    'font-src data: https:',
-    'media-src data: blob: https:',
-    'connect-src https:',
-    "base-uri 'none'",
-    "form-action 'none'",
-    "frame-ancestors 'none'",
-  ].join('; ');
-}
-
-/**
  * Pick a slug that is not already taken. Falls back to a random id when the
  * name slugifies to nothing or every numbered variant is taken.
  */

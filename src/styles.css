@@ -2262,3 +2262,33 @@ a {
     animation-iteration-count: 1 !important;
   }
 }
+
+/* Feedback strip shown when an offline app card saves or opens a local file. */
+.app-notice {
+  position: sticky;
+  bottom: 0.75rem;
+  align-self: center;
+  max-width: min(52rem, 100%);
+  margin: 0 auto;
+  padding: 0.65rem 1rem;
+  border: 1px solid rgba(15, 23, 42, 0.12);
+  border-radius: 0.5rem;
+  background: rgba(255, 255, 255, 0.94);
+  box-shadow: 0 10px 30px rgba(15, 23, 42, 0.16);
+  color: #0f172a;
+  font-size: 0.9rem;
+  font-weight: 600;
+  line-height: 1.45;
+  text-align: center;
+  backdrop-filter: blur(8px);
+}
+
+.app-notice[data-tone='error'] {
+  border-color: rgba(220, 38, 38, 0.35);
+  color: #b91c1c;
+}
+
+.app-notice[data-tone='success'] {
+  border-color: rgba(5, 150, 105, 0.35);
+  color: #047857;
+}

@@ -15,12 +15,6 @@ export type Shortcut = {
   categoryId?: string;
   iconMode?: 'favicon' | 'custom' | 'generic';
   customIconDataUrl?: string;
-  /**
-   * 'download' makes the card save the file instead of opening it as a page.
-   * Used for apps meant to run offline from local disk, where Cloudflare only
-   * stores the file and never serves it as a live web app.
-   */
-  openMode?: 'tab' | 'download';
 };
 
 export type ShortcutCategory = {
@@ -205,18 +199,22 @@ export function getShortcutHost(url: string) {
 }
 
 /**
- * Where a card should point. Normally that is the shortcut URL, but a card set
- * to offline mode points at the download endpoint instead, so clicking it saves
- * the file rather than having Cloudflare serve it as a live page.
+ * Files stored in AppHub always run offline, so a card pointing at one always
+ * downloads instead of opening. There is no view route: Cloudflare stores the
+ * bytes but never serves them as a live page.
  */
-export function getShortcutHref(shortcut: Pick<Shortcut, 'url' | 'openMode'>) {
-  if (shortcut.openMode !== 'download') return shortcut.url;
-  const match = normalizeUrl(shortcut.url).match(/^\/apps\/([a-z0-9-]+)\/?$/i);
-  return match ? `/api/apps/${match[1]}` : shortcut.url;
+export function hostedAppId(url: string) {
+  const match = normalizeUrl(url).match(/^\/apps\/([a-z0-9-]+)\/?$/i);
+  return match ? match[1] : '';
 }
 
-export function isDownloadCard(shortcut: Pick<Shortcut, 'openMode'>) {
-  return shortcut.openMode === 'download';
+export function isHostedAppUrl(url: string) {
+  return Boolean(hostedAppId(url));
+}
+
+export function getShortcutHref(shortcut: Pick<Shortcut, 'url'>) {
+  const id = hostedAppId(shortcut.url);
+  return id ? `/api/apps/${id}` : shortcut.url;
 }
 
 function readFaviconCache(): FaviconCache {
@@ -312,7 +310,6 @@ export function sanitizeShortcut(input: Partial<Shortcut>, index: number): Short
     typeof input.customIconDataUrl === 'string' && input.customIconDataUrl.startsWith('data:image/')
       ? input.customIconDataUrl.slice(0, 350_000)
       : undefined;
-  const openMode = input.openMode === 'download' ? 'download' : 'tab';
   return {
     id: String(input.id || crypto.randomUUID()),
     name,
@@ -324,7 +321,6 @@ export function sanitizeShortcut(input: Partial<Shortcut>, index: number): Short
     categoryId,
     iconMode,
     customIconDataUrl,
-    openMode,
   };
 }
 

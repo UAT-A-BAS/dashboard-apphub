@@ -3,7 +3,6 @@ import { describe, expect, it } from 'vitest';
 // It is plain ESM with no Cloudflare-only globals at module scope, so it can be
 // exercised directly here.
 import {
-  appContentSecurityPolicy,
   isLikelyHtml,
   MAX_APP_BYTES,
   normalizeAppName,
@@ -68,15 +67,5 @@ describe('utf8ByteLength', () => {
   it('counts multi-byte characters by their encoded size', () => {
     expect(utf8ByteLength('abc')).toBe(3);
     expect(utf8ByteLength('cafe\u0301')).toBe(6);
-  });
-});
-
-describe('appContentSecurityPolicy', () => {
-  it('sandboxes uploaded apps and blocks same-origin access', () => {
-    const policy = appContentSecurityPolicy();
-    expect(policy).toContain('sandbox');
-    expect(policy).toContain("default-src 'none'");
-    expect(policy).toContain("frame-ancestors 'none'");
-    expect(policy).not.toContain('allow-same-origin');
   });
 });

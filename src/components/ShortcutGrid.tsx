@@ -1,7 +1,8 @@
 import { useEffect, useMemo, useState } from 'react';
 import { ArrowUpRight, ChevronDown } from '../lib/icons';
 import ShortcutGlyph from './ShortcutGlyph';
-import { getShortcutHref, isDownloadCard, Shortcut, ShortcutCategory } from '../lib/shortcuts';
+import { isHostedAppUrl, Shortcut, ShortcutCategory } from '../lib/shortcuts';
+import HostedAppCard from './HostedAppCard';
 
 const COLLAPSED_CATEGORIES_KEY = 'apphub.collapsedCategories.v1';
 
@@ -10,6 +11,7 @@ type ShortcutGridProps = {
   categories: ShortcutCategory[];
   query: string;
   sortMode: 'default' | 'az' | 'za';
+  onNotice?: (message: string, tone: 'info' | 'error' | 'success') => void;
 };
 
 function readCollapsedCategories() {
@@ -21,7 +23,7 @@ function readCollapsedCategories() {
   }
 }
 
-export default function ShortcutGrid({ shortcuts, categories, query, sortMode }: ShortcutGridProps) {
+export default function ShortcutGrid({ shortcuts, categories, query, sortMode, onNotice }: ShortcutGridProps) {
   const [collapsedCategoryIds, setCollapsedCategoryIds] = useState<string[]>(() => readCollapsedCategories());
   const normalizedQuery = query.trim().toLowerCase();
   const uncategorized = { id: 'uncategorized', name: 'Lainnya' };
@@ -87,15 +89,21 @@ export default function ShortcutGrid({ shortcuts, categories, query, sortMode }:
               <ChevronDown className="shortcut-section-chevron" size={18} strokeWidth={2.4} />
             </button>
             <div className="shortcut-grid" id={sectionId} hidden={collapsed}>
-              {category.shortcuts.map((shortcut) => (
+              {category.shortcuts.map((shortcut) =>
+                isHostedAppUrl(shortcut.url) ? (
+                  <HostedAppCard
+                    key={shortcut.id}
+                    shortcut={shortcut}
+                    onNotice={onNotice ?? (() => {})}
+                  />
+                ) : (
                 <a
                   className="shortcut-card group"
-                  href={getShortcutHref(shortcut)}
-                  target={isDownloadCard(shortcut) ? undefined : '_blank'}
+                  href={shortcut.url}
+                  target="_blank"
                   rel="noreferrer"
                   key={shortcut.id}
-                  download={isDownloadCard(shortcut) ? true : undefined}
-                  aria-label={isDownloadCard(shortcut) ? `Unduh ${shortcut.name}` : `Buka ${shortcut.name}`}
+                  aria-label={`Buka ${shortcut.name}`}
                 >
                   <span className="shortcut-launch" aria-hidden="true">
                     <ArrowUpRight size={15} strokeWidth={2.4} />
@@ -105,7 +113,8 @@ export default function ShortcutGrid({ shortcuts, categories, query, sortMode }:
                     <span className="shortcut-label">{shortcut.name}</span>
                   </span>
                 </a>
-              ))}
+                ),
+              )}
             </div>
           </section>
         );
