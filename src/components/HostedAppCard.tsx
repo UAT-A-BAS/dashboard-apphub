@@ -32,7 +32,12 @@ export default function HostedAppCard({ shortcut, onNotice }: HostedAppCardProps
    */
   async function currentVersion() {
     try {
-      const response = await fetch('/api/apps', { cache: 'no-store' });
+      // Keep the check short. When the network is down this must fail fast and
+      // let the cached copy open, rather than leaving the click hanging.
+      const controller = new AbortController();
+      const timer = window.setTimeout(() => controller.abort(), 2500);
+      const response = await fetch('/api/apps', { cache: 'no-store', signal: controller.signal });
+      window.clearTimeout(timer);
       if (!response.ok) return '';
       const payload = (await response.json()) as HostedAppListResponse;
       return payload.apps?.find((app) => app.id === appId)?.version ?? '';
@@ -52,9 +57,18 @@ export default function HostedAppCard({ shortcut, onNotice }: HostedAppCardProps
     try {
       const version = await currentVersion();
       const cached = await readCachedApp(appId);
-      if (cached && version && cached.version === version) {
+      // Open the local copy when it is still current, and also when the version
+      // could not be checked at all. Offline is a normal way to use these apps,
+      // so a missing server response must not stop the local copy from opening.
+      const cacheIsUsable = cached && (!version || cached.version === version);
+      if (cacheIsUsable) {
         if (fillReservedTab(tab, cached.blob)) {
-          onNotice(`${shortcut.name} dibuka dari salinan lokal di komputer ini.`, 'success');
+          onNotice(
+            version
+              ? `${shortcut.name} dibuka dari salinan lokal di komputer ini.`
+              : `${shortcut.name} dibuka dari salinan lokal, tanpa koneksi ke AppHub.`,
+            'success',
+          );
           return;
         }
       }
@@ -85,7 +99,14 @@ export default function HostedAppCard({ shortcut, onNotice }: HostedAppCardProps
       closeTab(tab);
     } catch (error) {
       closeTab(tab);
-      onNotice(error instanceof Error ? error.message : 'Gagal membuka aplikasi.', 'error');
+      const message = error instanceof Error ? error.message : 'Gagal membuka aplikasi.';
+      const offline = typeof navigator !== 'undefined' && navigator.onLine === false;
+      onNotice(
+        offline
+          ? `${shortcut.name} belum pernah dibuka di komputer ini, jadi salinan lokalnya belum ada. Sambungkan internet sekali untuk mengunduhnya.`
+          : message,
+        'error',
+      );
     } finally {
       setBusy(false);
     }
