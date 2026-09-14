@@ -202,18 +202,13 @@ step "Copy the token shown on the next screen. It is displayed only once."
 ask_secret CLOUDFLARE_API_TOKEN "Paste the API token:"
 set_secret CLOUDFLARE_API_TOKEN "$CLOUDFLARE_API_TOKEN"
 
-stage "Cloudflare - account ID"
-say "The workflow needs the account ID that owns the apphub-uat Pages project."
-open_url "https://dash.cloudflare.com"
-step "Pick any domain in the list to reach the account overview."
-step "On the right side, copy the 'Account ID' value."
-note "Already known to this repo: 6988ad041ec2520cda7f72dca7269231"
-ask CLOUDFLARE_ACCOUNT_ID "Paste the account ID [Enter keeps the known value]:"
-if [[ -z "${CLOUDFLARE_ACCOUNT_ID:-}" ]]; then
-  CLOUDFLARE_ACCOUNT_ID="6988ad041ec2520cda7f72dca7269231"
-fi
-set_secret CLOUDFLARE_ACCOUNT_ID "$CLOUDFLARE_ACCOUNT_ID"
+stage "GitHub - store the account ID"
+say "The workflow also needs the Cloudflare account ID. This one is already known."
+note "Account ID: 6988ad041ec2520cda7f72dca7269231"
+step "Nothing to copy. Press Enter and the wizard sets it as a repo secret."
+pause
 
-write_env CLOUDFLARE_ACCOUNT_ID "$CLOUDFLARE_ACCOUNT_ID"
+set_secret CLOUDFLARE_ACCOUNT_ID "6988ad041ec2520cda7f72dca7269231"
+write_env CLOUDFLARE_ACCOUNT_ID "6988ad041ec2520cda7f72dca7269231"
 
 finish
