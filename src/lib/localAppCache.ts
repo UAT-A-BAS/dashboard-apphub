@@ -80,19 +80,32 @@ export function reserveTab() {
 }
 
 /**
- * Fill a reserved tab with the app. A blob URL keeps the document off the
- * network and runs its scripts, so it behaves like a file opened from disk.
+ * Fill a reserved tab with the app.
+ *
+ * The app is loaded into a sandboxed iframe rather than directly into the tab.
+ * A blob URL opened directly inherits AppHub's origin, which would let an
+ * uploaded file read the admin cookie and call the admin API. Without
+ * allow-same-origin the frame runs in an opaque origin: scripts still execute
+ * and the app works, but it cannot touch AppHub's cookie, storage, or APIs.
  */
 export function fillReservedTab(tab: Window | null, blob: Blob) {
   if (!tab) return false;
-  const url = URL.createObjectURL(new Blob([blob], { type: 'text/html' }));
+  const appUrl = URL.createObjectURL(new Blob([blob], { type: 'text/html' }));
+  const wrapper = [
+    '<!doctype html><html><head><meta charset="utf-8"><title>App</title>',
+    '<style>html,body{margin:0;height:100%;background:#0f172a}iframe{border:0;width:100%;height:100%;display:block}</style>',
+    '</head><body>',
+    `<iframe sandbox="allow-scripts allow-forms allow-modals allow-popups allow-downloads allow-popups-to-escape-sandbox" src="${appUrl}"></iframe>`,
+    '</body></html>',
+  ].join('');
   try {
-    tab.location.href = url;
+    tab.location.href = URL.createObjectURL(new Blob([wrapper], { type: 'text/html' }));
   } catch {
+    URL.revokeObjectURL(appUrl);
     return false;
   }
-  // The tab keeps its own copy of the bytes; free the URL later.
-  setTimeout(() => URL.revokeObjectURL(url), 120_000);
+  // The tab keeps its own copy of the bytes; free both URLs later.
+  setTimeout(() => URL.revokeObjectURL(appUrl), 120_000);
   return true;
 }
 
