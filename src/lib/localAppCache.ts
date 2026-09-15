@@ -79,40 +79,99 @@ export function reserveTab() {
   return window.open('about:blank', '_blank');
 }
 
-/**
- * Fill a reserved tab with the app.
- *
- * The app is loaded into a sandboxed iframe rather than directly into the tab.
- * A blob URL opened directly inherits AppHub's origin, which would let an
- * uploaded file read the admin cookie and call the admin API. Without
- * allow-same-origin the frame runs in an opaque origin: scripts still execute
- * and the app works, but it cannot touch AppHub's cookie, storage, or APIs.
- */
-export function fillReservedTab(tab: Window | null, blob: Blob) {
-  if (!tab) return false;
-  const appUrl = URL.createObjectURL(new Blob([blob], { type: 'text/html' }));
-  const wrapper = [
-    '<!doctype html><html><head><meta charset="utf-8"><title>App</title>',
-    '<style>html,body{margin:0;height:100%;background:#0f172a}iframe{border:0;width:100%;height:100%;display:block}</style>',
-    '</head><body>',
-    `<iframe sandbox="allow-scripts allow-forms allow-modals allow-popups allow-downloads allow-popups-to-escape-sandbox" src="${appUrl}"></iframe>`,
-    '</body></html>',
-  ].join('');
-  try {
-    tab.location.href = URL.createObjectURL(new Blob([wrapper], { type: 'text/html' }));
-  } catch {
-    URL.revokeObjectURL(appUrl);
-    return false;
-  }
-  // The tab keeps its own copy of the bytes; free both URLs later.
-  setTimeout(() => URL.revokeObjectURL(appUrl), 120_000);
-  return true;
-}
-
 export function closeTab(tab: Window | null) {
   try {
     tab?.close();
   } catch {
     // Closing a tab the page no longer owns is not worth surfacing.
+  }
+}
+
+function withTimeout<T>(promise: Promise<T>, ms: number, fallback: T): Promise<T> {
+  return new Promise<T>((resolve) => {
+    const timer = setTimeout(() => resolve(fallback), ms);
+    promise
+      .then((value) => {
+        clearTimeout(timer);
+        resolve(value);
+      })
+      .catch(() => {
+        clearTimeout(timer);
+        resolve(fallback);
+      });
+  });
+}
+
+let workerRegistration: Promise<ServiceWorkerRegistration | null> | null = null;
+
+/**
+ * Register the worker that serves stored apps from a real URL. Returns null
+ * when service workers are unavailable (private mode, unsupported browser), so
+ * callers can fall back to the blob route.
+ */
+export function ensureAppServiceWorker() {
+  if (workerRegistration) return workerRegistration;
+  if (typeof navigator === 'undefined' || !('serviceWorker' in navigator)) {
+    workerRegistration = Promise.resolve(null);
+    return workerRegistration;
+  }
+  workerRegistration = navigator.serviceWorker
+    .register('/apphub-app-sw.js', { scope: '/' })
+    // Bound activation. `navigator.serviceWorker.ready` can stay pending forever
+    // if activation never completes, which would leave the card spinning.
+    .then((registration) => withTimeout(navigator.serviceWorker.ready, 8000, null).then(() => registration))
+    .catch(() => null);
+  return workerRegistration;
+}
+
+/**
+ * Hand the app's bytes to the worker and return the URL it will be served at.
+ * The bytes travel over postMessage rather than a query string, so file size is
+ * not bounded by URL length.
+ */
+export async function publishAppToServiceWorker(id: string, blob: Blob, version: string) {
+  const registration = await withTimeout(ensureAppServiceWorker(), 9000, null);
+  if (!registration) return '';
+
+  const html = await blob.text();
+  const target = registration.active ?? registration.waiting ?? registration.installing;
+  if (!target) return '';
+
+  const ready = new Promise<boolean>((resolve) => {
+    // Always detach the listener and clear the timer, on success or timeout.
+    const finish = (value: boolean) => {
+      clearTimeout(timer);
+      navigator.serviceWorker.removeEventListener('message', onMessage);
+      resolve(value);
+    };
+    const timer = setTimeout(() => finish(false), 5000);
+    const onMessage = (event: MessageEvent) => {
+      if (event.data?.type === 'apphub:local-app-ready' && event.data.id === id) {
+        finish(true);
+      }
+    };
+    navigator.serviceWorker.addEventListener('message', onMessage);
+  });
+
+  target.postMessage({ type: 'apphub:local-app', id, html, version });
+  const ok = await ready;
+  return ok ? `/local/app/${encodeURIComponent(id)}/` : '';
+}
+
+/**
+ * Drop every local trace of a stored app: the cached bytes and the copy held by
+ * the service worker. Without this, deleting an app in the admin panel would
+ * leave the visitor's browser still able to open it, and a re-upload would keep
+ * serving the previous version from the worker.
+ */
+export async function forgetLocalApp(id: string) {
+  await clearCachedApp(id);
+  try {
+    if (typeof navigator === 'undefined' || !('serviceWorker' in navigator)) return;
+    const registration = await navigator.serviceWorker.getRegistration('/');
+    const target = registration?.active ?? registration?.waiting ?? registration?.installing;
+    target?.postMessage({ type: 'apphub:forget-app', id });
+  } catch {
+    // Best effort: the cached copy is already gone.
   }
 }

@@ -1,6 +1,7 @@
 import { ChangeEvent, useEffect, useState } from 'react';
 import { Download, Plus, Trash, Upload, shortcutIconNames } from '../lib/icons';
 import { deleteHostedApp, downloadHostedApp, HostedApp, listHostedApps, uploadHostedApp } from '../lib/adminApi';
+import { forgetLocalApp } from '../lib/localAppCache';
 import { Shortcut, ShortcutCategory } from '../lib/shortcuts';
 
 type Notice = {
@@ -149,6 +150,9 @@ export default function HostedAppsPanel({ onNotice, categories, onAddShortcut, o
     setBusy(true);
     try {
       await deleteHostedApp(app.id);
+      // Also drop the copy kept in this browser, so a deleted app cannot still
+      // be opened from the local snapshot.
+      await forgetLocalApp(app.id);
       setApps((items) => items.filter((item) => item.id !== app.id));
       // Removing only the file left its shortcut card behind, pointing at a URL
       // that no longer exists. Drop the card too so the two stay in step.
