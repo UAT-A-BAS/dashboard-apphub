@@ -21,7 +21,19 @@ opens its `/apps/<id>/` URL sees the same file. Stored apps are served with a
 `sandbox` Content-Security-Policy, which runs them in an opaque origin: they
 cannot read the admin cookie, `localStorage`, or the admin API.
 
-Files are kept in the `APPHUB_CONFIG` KV namespace, capped at 2 MB each and 50
+### Replacing a stored file
+
+Each row in **Aplikasi HTML tersimpan** has a **Ganti File** button. Picking a new
+HTML file overwrites the stored bytes through `PUT /api/admin/apps` while keeping
+the same id, so the `/apps/<id>/` URL, every shortcut card, and any shared link
+keep working. The new `uploadedAt` stamp invalidates the cached copy in each
+visitor's browser, so the next click opens the new version.
+
+Replacing is not the same as re-uploading: a new upload creates a second app with
+a suffixed id (`nama-2`) and needs its card added again. Use **Ganti File** when
+the id and the cards should stay put.
+
+Files are kept in the `APPHUB_CONFIG` KV namespace, capped at 25 MB each and 50
 files total.
 
 ## Deploy

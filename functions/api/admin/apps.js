@@ -43,6 +43,21 @@ async function writeIndex(env, entries) {
   await env.APPHUB_CONFIG.put(APP_INDEX_KEY, JSON.stringify(entries));
 }
 
+/**
+ * Shared validation for uploads and replacements, so a swapped-in file is held
+ * to exactly the same rules as a brand new one.
+ */
+function readAppFile(body) {
+  const html = typeof body?.html === 'string' ? body.html : '';
+  if (!html.trim()) return { error: 'File HTML kosong.', status: 400 };
+  if (!isLikelyHtml(html)) return { error: 'File itu tidak terlihat seperti HTML.', status: 400 };
+
+  const bytes = utf8ByteLength(html);
+  if (bytes > MAX_APP_BYTES) return { error: appByteLimitMessage(bytes), status: 413 };
+
+  return { html, bytes };
+}
+
 export async function onRequestGet({ request, env }) {
   const authError = await requireAdmin(request, env);
   if (authError) return authError;
@@ -70,14 +85,9 @@ export async function onRequestPost({ request, env }) {
   const name = normalizeAppName(body?.name);
   if (!name) return noStore({ message: 'Nama aplikasi wajib diisi.' }, { status: 400 });
 
-  const html = typeof body?.html === 'string' ? body.html : '';
-  if (!html.trim()) return noStore({ message: 'File HTML kosong.' }, { status: 400 });
-  if (!isLikelyHtml(html)) {
-    return noStore({ message: 'File itu tidak terlihat seperti HTML.' }, { status: 400 });
-  }
-
-  const bytes = utf8ByteLength(html);
-  if (bytes > MAX_APP_BYTES) return noStore({ message: appByteLimitMessage(bytes) }, { status: 413 });
+  const file = readAppFile(body);
+  if (file.error) return noStore({ message: file.error }, { status: file.status });
+  const { html, bytes } = file;
 
   const apps = await readIndex(env);
   const id = uniqueAppId(name, apps.map((app) => app.id));
@@ -95,6 +105,56 @@ export async function onRequestPost({ request, env }) {
   await writeIndex(env, [...apps, entry]);
 
   return noStore({ app: entry, url: `/apps/${id}/`, maxBytes: MAX_APP_BYTES });
+}
+
+/**
+ * Replace the bytes of an app that already exists, keeping its id and therefore
+ * its URL. Cards, bookmarks and shared links keep working, and every visitor's
+ * local copy is invalidated by the new uploadedAt stamp.
+ */
+export async function onRequestPut({ request, env }) {
+  const authError = await requireAdmin(request, env);
+  if (authError) return authError;
+  if (!env.APPHUB_CONFIG) {
+    return noStore({ message: 'KV binding APPHUB_CONFIG belum dikonfigurasi.' }, { status: 500 });
+  }
+
+  let body;
+  try {
+    body = await request.json();
+  } catch {
+    return noStore({ message: 'Payload tidak valid.' }, { status: 400 });
+  }
+
+  const id = String(body?.id ?? '').trim();
+  if (!id) return noStore({ message: 'ID aplikasi wajib diisi.' }, { status: 400 });
+
+  const apps = await readIndex(env);
+  const index = apps.findIndex((app) => app.id === id);
+  if (index === -1) {
+    return noStore({ message: 'Aplikasi tidak ditemukan. Ganti file hanya berlaku untuk aplikasi yang sudah tersimpan.' }, { status: 404 });
+  }
+
+  const file = readAppFile(body);
+  if (file.error) return noStore({ message: file.error }, { status: file.status });
+  const { html, bytes } = file;
+
+  const previous = apps[index];
+  // A blank name means "keep the current one", so the field stays optional.
+  const name = normalizeAppName(body?.name) || previous.name;
+
+  await env.APPHUB_CONFIG.put(appContentKey(id), html);
+  const entry = {
+    ...previous,
+    name,
+    bytes,
+    uploadedAt: new Date().toISOString(),
+  };
+  const next = [...apps];
+  next[index] = entry;
+  await writeIndex(env, next);
+
+  return noStore({ app: entry, url: `/apps/${id}/`, maxBytes: MAX_APP_BYTES, replaced: true });
 }
 
 export async function onRequestDelete({ request, env }) {

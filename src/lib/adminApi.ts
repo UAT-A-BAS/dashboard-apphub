@@ -57,6 +57,25 @@ export async function uploadHostedApp(name: string, html: string) {
   return (await response.json()) as { app: HostedApp; url: string };
 }
 
+/**
+ * Swap the bytes behind an app that is already stored. The id and URL stay the
+ * same, so existing cards keep pointing at the right place and the new
+ * uploadedAt stamp tells every browser to drop its cached copy.
+ */
+export async function replaceHostedApp(id: string, html: string, name?: string) {
+  const response = await fetch('/api/admin/apps', {
+    method: 'PUT',
+    credentials: 'include',
+    headers: { 'content-type': 'application/json' },
+    body: JSON.stringify({ id, name, html }),
+  });
+  if (!response.ok) {
+    const payload = await response.json().catch(() => ({ message: 'Gagal mengganti file aplikasi.' }));
+    throw new Error(String(payload.message || 'Gagal mengganti file aplikasi.'));
+  }
+  return (await response.json()) as { app: HostedApp; url: string; replaced: boolean };
+}
+
 export async function deleteHostedApp(id: string) {
   const response = await fetch(`/api/admin/apps?id=${encodeURIComponent(id)}`, {
     method: 'DELETE',

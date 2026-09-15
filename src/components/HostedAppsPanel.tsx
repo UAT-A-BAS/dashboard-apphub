@@ -1,6 +1,6 @@
 import { ChangeEvent, useEffect, useState } from 'react';
-import { Download, Plus, Trash, Upload, shortcutIconNames } from '../lib/icons';
-import { deleteHostedApp, downloadHostedApp, HostedApp, listHostedApps, uploadHostedApp } from '../lib/adminApi';
+import { Download, Plus, RefreshCcw, Trash, Upload, shortcutIconNames } from '../lib/icons';
+import { deleteHostedApp, downloadHostedApp, HostedApp, listHostedApps, replaceHostedApp, uploadHostedApp } from '../lib/adminApi';
 import { forgetLocalApp } from '../lib/localAppCache';
 import { Shortcut, ShortcutCategory } from '../lib/shortcuts';
 
@@ -179,6 +179,42 @@ export default function HostedAppsPanel({ onNotice, categories, onAddShortcut, o
     }
   }
 
+  /**
+   * Swap the file behind an existing app. The id does not change, so the card
+   * that points at it keeps working and only the bytes are refreshed.
+   */
+  async function handleReplace(app: HostedApp, event: ChangeEvent<HTMLInputElement>) {
+    const file = event.target.files?.[0];
+    event.target.value = '';
+    if (!file) return;
+
+    if (maxBytes && file.size > maxBytes) {
+      onNotice({
+        tone: 'error',
+        message: `${file.name} (${formatBytes(file.size)}) melebihi batas penyimpanan Cloudflare ${formatBytes(maxBytes)}.`,
+      });
+      return;
+    }
+
+    setBusy(true);
+    try {
+      const html = await file.text();
+      const result = await replaceHostedApp(app.id, html, app.name);
+      setApps((items) => items.map((item) => (item.id === app.id ? result.app : item)));
+      // Drop this browser's snapshot too. Without it the card keeps opening the
+      // previous version from the local copy until the version check runs.
+      await forgetLocalApp(app.id);
+      onNotice({
+        tone: 'success',
+        message: `File ${result.app.name} diganti (${formatBytes(result.app.bytes)}). URL dan kartunya tetap sama.`,
+      });
+    } catch (error) {
+      onNotice({ tone: 'error', message: error instanceof Error ? error.message : 'Gagal mengganti file aplikasi.' });
+    } finally {
+      setBusy(false);
+    }
+  }
+
   return (
     <section className="category-admin-panel">
       <div className="category-admin-head">
@@ -296,6 +332,18 @@ export default function HostedAppsPanel({ onNotice, categories, onAddShortcut, o
                   <Download size={16} />
                   Download
                 </button>
+                <label className={`text-button cursor-pointer ${busy ? 'opacity-60' : ''}`} title={`Ganti file untuk ${app.name}`}>
+                  <RefreshCcw size={16} />
+                  Ganti File
+                  <input
+                    className="sr-only"
+                    type="file"
+                    accept="text/html,.html,.htm"
+                    onChange={(event) => void handleReplace(app, event)}
+                    disabled={busy}
+                    aria-label={`Ganti file untuk ${app.name}`}
+                  />
+                </label>
                 <button
                   className="text-button"
                   type="button"
